@@ -7,34 +7,39 @@
  * @copyright © Copyright 2015 Ben Syverson
  */
 
-// flask stubb starbuck
+// flask stubb starbuck harpoon 
 
-var require = require || {};
-var psh = require('putstuffhere');
+var require = require || function(){};
+var psh = psh || require('putstuffhere');
 
 var module = module || {};
 module.exports = module.exports || {};
 
-// module.exports = function(){
+var println = println || function(e) { console.log(e) };
 
 
-var UpdateManager = function() {
+/**
+ * Update Manager
+ * @constructor
+ */
+var UpdateMangager = function() {
 	this.endpoints = [];
 };
 
-UpdateManager.prototype.addObserver = function(viewOrElement) {
+/**
+ * Add Observer
+ * @param {argumentType} argumentName The view to observe
+ */
+UpdateMangager.prototype.addObserver = function(argumentName) {
 	var self = this;
 };
 
-UpdateManager.prototype.startListening = function(endpoint) {
-	var self = this;
-};
 
-UpdateManager.prototype.stopListening = function(endpoint) {
-	var self = this;
-};
-
-var View = function(){
+/**
+ * View
+ * @constructor
+ */
+var View = function() {
 	this.template = null;
 	this.subviews = [];
 	this.superview = null;
@@ -42,31 +47,34 @@ var View = function(){
 	// hooks for live updating
 	this.model = '';
 	this.id = -1;
-
 };
 
+/**
+ * Add Subview
+ * @param {View} aView The View to add
+ */
 View.prototype.addSubview = function(aView) {
+	var self = this;
 	var self = this;
 	self.subviews.push(aView);
 	aView.superview = self;
 };
 
-View.prototype.render = function(locals) {
+
+/**
+ * Render
+ */
+View.prototype.render = function() {
 	var self = this;
 
 	var string = '';
-	for (int i = 0; i < self.subviews.length; i++) {
+	for (var i = 0; i < self.subviews.length; i++) {
 		string += self.subviews[i].render();
 	}
 	return string;
 };
 
 var Ishmael = function(){
-	var println = function() {
-		console.log(arguments);
-	};
-	println('-------------------');
-
 
 	/* Ships can be initialized with Sails Waterline objects as well as JSON */
 	var Ship = function(endpointName) {
@@ -95,10 +103,4 @@ var Ishmael = function(){
 
 	println(ishmael.endpoint);
 };
-
-module.exports = Ishmael;
-
-
-
-// };
 
