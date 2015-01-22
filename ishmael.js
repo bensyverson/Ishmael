@@ -9,11 +9,57 @@
 
 // flask stubb starbuck
 
+var require = require || {};
+var psh = require('putstuffhere');
 
-var module = module ? module : {};
-module.exports = module.exports ? module.exports : {};
+var module = module || {};
+module.exports = module.exports || {};
 
 // module.exports = function(){
+
+
+var UpdateManager = function() {
+	this.endpoints = [];
+};
+
+UpdateManager.prototype.addObserver = function(viewOrElement) {
+	var self = this;
+};
+
+UpdateManager.prototype.startListening = function(endpoint) {
+	var self = this;
+};
+
+UpdateManager.prototype.stopListening = function(endpoint) {
+	var self = this;
+};
+
+var View = function(){
+	this.template = null;
+	this.subviews = [];
+	this.superview = null;
+
+	// hooks for live updating
+	this.model = '';
+	this.id = -1;
+
+};
+
+View.prototype.addSubview = function(aView) {
+	var self = this;
+	self.subviews.push(aView);
+	aView.superview = self;
+};
+
+View.prototype.render = function(locals) {
+	var self = this;
+
+	var string = '';
+	for (int i = 0; i < self.subviews.length; i++) {
+		string += self.subviews[i].render();
+	}
+	return string;
+};
 
 var Ishmael = function(){
 	var println = function() {
@@ -24,8 +70,7 @@ var Ishmael = function(){
 
 	/* Ships can be initialized with Sails Waterline objects as well as JSON */
 	var Ship = function(endpointName) {
-		var self = this;
-		self.endpoint = endpointName || '';
+		this.endpoint = endpointName || '';
 	};
 
 	Ship.prototype.status = function() {
