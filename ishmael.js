@@ -2,18 +2,36 @@
 
 /**
  * @summary Ishmael.js is a VC layer for isomorphic development in Sails
- * @author <a href="mailto:bsyverson@ideo.com">Ben Syverson</a>
+ * @author <a href="mailto:ben@bensyverson.com">Ben Syverson</a>
  * @version 0.1
  * @copyright © Copyright 2015 Ben Syverson
+ * @license The MIT License (MIT)
+ * Copyright (c) 2015 Ben Syverson
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+ * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
 // flask stubb starbuck harpoon 
 
 var require = require || function(){};
-var psh = psh || require('putstuffhere');
-
-var module = module || {};
-module.exports = module.exports || {};
+var psh = psh || require('./putstuffhere.js').shared;
 
 var println = println || function(e) { console.log(e) };
 
@@ -23,7 +41,7 @@ var println = println || function(e) { console.log(e) };
  * @constructor
  */
 var UpdateMangager = function() {
-	this.endpoints = [];
+	this.endpoints = {};
 };
 
 /**
@@ -39,7 +57,8 @@ UpdateMangager.prototype.addObserver = function(argumentName) {
  * View
  * @constructor
  */
-var View = function() {
+var View = function(viewName) {
+	this.viewName = viewName || 'index.html';
 	this.template = null;
 	this.subviews = [];
 	this.superview = null;
@@ -49,13 +68,26 @@ var View = function() {
 	this.id = -1;
 };
 
+
+/**
+ * Init
+ */
+View.prototype.init = function(cb) {
+	var self = this;
+	
+	psh().getTemplateFunction(self.viewName, function(err, func){
+		self.template = func;
+		cb();
+	});
+};
+
 /**
  * Add Subview
  * @param {View} aView The View to add
  */
 View.prototype.addSubview = function(aView) {
 	var self = this;
-	var self = this;
+
 	self.subviews.push(aView);
 	aView.superview = self;
 };
@@ -67,11 +99,17 @@ View.prototype.addSubview = function(aView) {
 View.prototype.render = function() {
 	var self = this;
 
-	var string = '';
+	var subviewString = '';
 	for (var i = 0; i < self.subviews.length; i++) {
-		string += self.subviews[i].render();
+		subviewString += self.subviews[i].render();
 	}
-	return string;
+
+	var locals = {
+		subviews: subviewString,
+		test: '         Testing!',
+	};
+
+	return self.template(locals);
 };
 
 var Ishmael = function(){
@@ -84,7 +122,6 @@ var Ishmael = function(){
 	Ship.prototype.status = function() {
 		return "I'm Sailing!";
 	};
-
 
 	/* Factory method for Ships */
 	var Shipwright = function(shipName) {
@@ -104,3 +141,11 @@ var Ishmael = function(){
 	println(ishmael.endpoint);
 };
 
+
+var aView = new View('../../templates/blue.html');
+aView.init(function(){
+	println(aView.render());
+});
+
+var module = module || {};
+module.exports = module.exports || {};
