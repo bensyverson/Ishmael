@@ -34,6 +34,12 @@ var require = require || function(){};
 var _PutStuffHere = PutStuffHere || require('./putstuffhere.js');
 var psh = psh || (_PutStuffHere ? _PutStuffHere.shared : null);
 
+/**
+ * Put Stuff Here doesn't know about Ishmael.
+ * We'll insert `subviews (unescaped)` so Views can insert subviews.
+ */
+psh().setDefaultHTML("<div>put subviews (unescaped) here</div>");
+
 var _uuid = UUID || require('./uuid.js');
 var uuid = uuid || (_uuid ? _uuid.shared : null);
 
@@ -110,13 +116,19 @@ var Router = function(routes) {
 /**
  * App object
  * @constructor
+ * @param {ViewController} aViewController The root view controller
  */
-var App = function() {
+var App = function(aViewController) {
 	// TODO
 	this.router = new Router();
 	this.dispatcher = new Dispatcher();
 
 	this.viewControllers = [];
+	
+
+	if (aViewController) {
+		this.viewControllers.push(aViewController);
+	} 
 };
 
 /**
@@ -128,9 +140,17 @@ App.prototype.init = function() {
 	if (self.viewControllers.length < 1) {
 		println("Apps should have one view controller at launch.");
 	}
-
-
 };
+
+/**
+ * Get Root View Controller
+ */
+App.prototype.rootViewController = function() {
+	var self = this;
+	return self.viewControllers[0];
+};
+
+
 
 /**
  * Add View Controller
@@ -159,12 +179,14 @@ var ViewController = function(aRoute, aView) {
 var View = function(viewName, aName, cb) {
 	var self = this;
 	this.queue = new Queue();
-	this.viewName = viewName || 'index.html';
+	this.viewName = viewName || null;
 	this.template = null;
 	this.subviews = [];
 	this.renderedHTML = '';
 	this.superview = null;
 	this.uniqueId = null;
+
+	this.locals = {};
 
 	this.name = aName || 'Anonymous View';
 
@@ -265,6 +287,19 @@ View.prototype.bind = function(anApp, anElement, cb) {
 	return self;
 };
 
+
+/**
+ * Fill locals once update is ready
+ * @param {Function} cb A callback
+ */
+View.prototype.updateLocals = function(cb) {
+	var self = this;
+	var err = null;
+	// No op for now
+	if (cb) cb(err, self.uniqueId);
+	return self;
+};
+
 /**
  * Update View using routing from the app.
  * @param {Function} cb A callback
@@ -286,6 +321,7 @@ View.prototype.update = function(cb) {
 			var dummy = document.createElement('div');
 			dummy.innerHTML = self.render(true);
 			anElement.parentNode.replaceChild(dummy.firstChild, anElement);
+			dummy = null;
 		} else {
 			println("Warning: Can't find element for view " + self.name + " (" + self.uniqueId + ")");
 		}
@@ -308,6 +344,20 @@ View.prototype.addSubview = function(aView) {
 	aView.superview = self;
 };
 
+/**
+ * Remove All Subviews.
+ */
+View.prototype.removeAllSubviews = function() {
+	var self = this;
+
+	while (self.subviews.length > 0) {
+		var aSubview = self.subviews.pop();
+		aSubview.removeAllSubviews();
+	}
+	self.update();
+	return self;
+};
+
 
 /**
  * Render
@@ -320,12 +370,9 @@ View.prototype.render = function(isBrowser) {
 		subviewString += self.subviews[i].render(isBrowser);
 	}
 
-	var locals = {
-		subviews: subviewString,
-		test: self.name,
-	};
+	self.locals['subviews'] = subviewString;
 
-	self.renderedHTML = self.template(locals);
+	self.renderedHTML = self.template(self.locals);
 	if (isBrowser) {
 		self.renderedHTML = self.renderedHTML.replace(/^([^<]*<[a-z0-9]+)([>\s])/i, "$1 data-ish=\"" + self.uniqueId + "\"$2");
 	}
