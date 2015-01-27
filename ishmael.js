@@ -41,6 +41,9 @@ var println = println || function(e) { console.log(e) };
 
 var _ = _ || require('./lodash.js');
 
+var director = director || require('./director.js');
+var Router = Router || (director ? director.Router : null);
+
 /**
  * Update Manager
  * @constructor
@@ -71,6 +74,8 @@ var View = function(viewName, aName, cb) {
 	this.superview = null;
 	this.name = aName || 'Anonymous View';
 
+	this.elementName = 'div';
+
 	// hooks for live updating
 	this.model = '';
 	this.id = -1;
@@ -93,6 +98,7 @@ View.prototype.init = function(cb) {
 	self.initStarted = true;
 	
 	var initDone = function() {
+		println("I should never be called twice as '" + self.name + "'.");
 		self.initialized = true;
 		self.queue.flush();
 		if (cb) cb();
@@ -110,17 +116,17 @@ View.prototype.init = function(cb) {
 							nextFunction();
 						});
 					} else {
+						println("I don't!");
 						initDone();
 					}
 				};
 				nextFunction();
 			} else {
+				println("I have subviews…");
 				initDone();
 			}
 		});
-	};
-
-	doInit();
+	}();
 
 	return self;
 };
@@ -132,6 +138,7 @@ View.prototype.enqueue = function(aFunction){
 	if (!self.initStarted) {
 		self.init();
 	}
+
 	if (self.initialized) {
 		aFunction();
 	} else {
@@ -147,12 +154,62 @@ View.prototype.bind = function(anElement, cb) {
 	var self = this;
 
 	self.enqueue(function() {
-		anElement.innerHTML = self.render();
-		if (cb) cb();
+		if (anElement) {
+			var html = self.render();
+			// var frame = document.createElement('iframe');
+
+
+			// frame.style.display = 'none';
+			// document.body.appendChild(frame);             
+			// frame.contentDocument.open();
+			// frame.contentDocument.write(html);
+			// frame.contentDocument.close();
+			// var el = frame.contentDocument.body.firstChild;
+
+			// while (anElement.firstChild) {
+			// 	anElement.removeChild(anElement.firstChild);
+			// }
+
+			// var observer = new MutationObserver(function(mutations) {
+			// 	// if (cb) cb();
+			//   mutations.forEach(function(mutation) {
+			//     console.log(mutation.type);
+			//   });    
+			// });
+
+			// var config = { attributes: true, childList: true, characterData: true };
+
+			// observer.observe(anElement, config);
+
+			// anElement.addEventListener('DOMNodeInserted', function(e) {
+			// 	println("**************************************************");
+			// 	if (cb) cb();
+			// });
+
+			// document.body.removeChild(frame);
+			// anElement.appendChild(el);
+
+			anElement.innerHTML = html;
+			if (cb) cb();
+		}
 	});
 
 	return self;
 };
+
+/**
+ * Init
+ */
+View.prototype.refreshHTML = function(cb) {
+	var self = this;
+
+	self.enqueue(function() {
+		if (cb) cb(self.render());
+	});
+
+	return self;
+};
+
 
 
 /**
@@ -216,6 +273,8 @@ var Ishmael = function(){
 	println(ishmael.endpoint);
 };
 
+
+Ishmael();
 
 var module = module || {};
 module.exports = module.exports || {};
