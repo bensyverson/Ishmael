@@ -31,10 +31,15 @@
 // flask stubb starbuck harpoon 
 
 var require = require || function(){};
-var psh = psh || require('./putstuffhere.js').shared;
+var _PutStuffHere = PutStuffHere || require('./putstuffhere.js');
+var psh = psh || (_PutStuffHere ? _PutStuffHere.shared : null);
+
+var _Queue = require('./queue.js');
+var Queue = Queue || (_Queue ? _Queue.Queue : null);
 
 var println = println || function(e) { console.log(e) };
 
+var _ = _ || require('./lodash.js');
 
 /**
  * Update Manager
@@ -57,32 +62,101 @@ UpdateMangager.prototype.addObserver = function(argumentName) {
  * View
  * @constructor
  */
-var View = function(viewName) {
+var View = function(viewName, aName, cb) {
+	this.queue = new Queue();
 	this.viewName = viewName || 'index.html';
 	this.template = null;
 	this.subviews = [];
+	this.renderedHTML = '';
 	this.superview = null;
+	this.name = aName || 'Anonymous View';
 
 	// hooks for live updating
 	this.model = '';
 	this.id = -1;
+	this.initialized = false;
+	this.initStarted = false;
+
+	if (cb) {
+		this.init(cb);
+	}
 };
 
 
 /**
  * Init
+ * @param {Function} cb A function to call when all subviews have init()'d
  */
 View.prototype.init = function(cb) {
 	var self = this;
+
+	self.initStarted = true;
 	
-	psh().getTemplateFunction(self.viewName, function(err, func){
-		self.template = func;
-		cb();
-	});
+	var initDone = function() {
+		self.initialized = true;
+		self.queue.flush();
+		if (cb) cb();
+	};
+
+	var doInit = function() {
+		psh().getTemplateFunction(self.viewName, function(err, func){
+			self.template = func;
+
+			if (self.subviews.length > 0) {
+				var i = 0;
+				var nextFunction = function() {
+					if (i < self.subviews.length) {
+						self.subviews[i++].init(function(){
+							nextFunction();
+						});
+					} else {
+						initDone();
+					}
+				};
+				nextFunction();
+			} else {
+				initDone();
+			}
+		});
+	};
+
+	doInit();
+
+	return self;
+};
+
+
+
+View.prototype.enqueue = function(aFunction){
+	var self = this;
+	if (!self.initStarted) {
+		self.init();
+	}
+	if (self.initialized) {
+		aFunction();
+	} else {
+		self.queue.add(aFunction);
+	}
+	return self;
 };
 
 /**
- * Add Subview
+ * Init
+ */
+View.prototype.bind = function(anElement, cb) {
+	var self = this;
+
+	self.enqueue(function() {
+		anElement.innerHTML = self.render();
+		if (cb) cb();
+	});
+
+	return self;
+};
+
+
+/**
+ * Add Subview. Not chainable, because init() must come either before or after.
  * @param {View} aView The View to add
  */
 View.prototype.addSubview = function(aView) {
@@ -109,7 +183,8 @@ View.prototype.render = function() {
 		test: '         Testing!',
 	};
 
-	return self.template(locals);
+	self.renderedHTML = self.template(locals);
+	return self.renderedHTML;
 };
 
 var Ishmael = function(){
@@ -141,11 +216,6 @@ var Ishmael = function(){
 	println(ishmael.endpoint);
 };
 
-
-var aView = new View('../../templates/blue.html');
-aView.init(function(){
-	println(aView.render());
-});
 
 var module = module || {};
 module.exports = module.exports || {};
