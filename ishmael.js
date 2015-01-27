@@ -41,9 +41,6 @@ var println = println || function(e) { console.log(e) };
 
 var _ = _ || require('./lodash.js');
 
-var director = director || require('./director.js');
-var Router = Router || (director ? director.Router : null);
-
 /**
  * Update Manager
  * @constructor
@@ -59,6 +56,62 @@ var UpdateMangager = function() {
 UpdateMangager.prototype.addObserver = function(argumentName) {
 	var self = this;
 };
+
+
+/**
+ * Router
+ * @constructor
+ */
+var Router = function(routes) {
+	// TODO
+
+	this.routes = routes || {};
+};
+
+
+
+
+
+/**
+ * App object
+ * @constructor
+ */
+var App = function() {
+	// TODO
+	this.router = new Router;
+	this.viewControllers = [];
+};
+
+/**
+ * Init
+ */
+App.prototype.init = function() {
+	var self = this;
+
+	if (self.viewControllers.length < 1) {
+		println("Apps should have one view controller at launch.");
+	}
+};
+
+/**
+ * Add View Controller
+ * @param {ViewController} aViewController The View Controller
+ */
+App.prototype.addViewController = function(aViewController) {
+	var self = this;
+	self.viewControllers.push(aViewController);
+};
+
+/**
+ * A View Controller
+ * @constructor
+ */
+var ViewController = function(aRoute, aView) {
+	// TODO
+	this.view = aView || new View('untitled.html', 'Untitled');
+	this.route = aRoute || 'default';
+};
+
 
 
 /**
@@ -98,7 +151,6 @@ View.prototype.init = function(cb) {
 	self.initStarted = true;
 	
 	var initDone = function() {
-		println("I should never be called twice as '" + self.name + "'.");
 		self.initialized = true;
 		self.queue.flush();
 		if (cb) cb();
@@ -116,18 +168,15 @@ View.prototype.init = function(cb) {
 							nextFunction();
 						});
 					} else {
-						println("I don't!");
 						initDone();
 					}
 				};
 				nextFunction();
 			} else {
-				println("I have subviews…");
 				initDone();
 			}
 		});
 	}();
-
 	return self;
 };
 
@@ -155,56 +204,9 @@ View.prototype.bind = function(anElement, cb) {
 
 	self.enqueue(function() {
 		if (anElement) {
-			var html = self.render();
-			// var frame = document.createElement('iframe');
-
-
-			// frame.style.display = 'none';
-			// document.body.appendChild(frame);             
-			// frame.contentDocument.open();
-			// frame.contentDocument.write(html);
-			// frame.contentDocument.close();
-			// var el = frame.contentDocument.body.firstChild;
-
-			// while (anElement.firstChild) {
-			// 	anElement.removeChild(anElement.firstChild);
-			// }
-
-			// var observer = new MutationObserver(function(mutations) {
-			// 	// if (cb) cb();
-			//   mutations.forEach(function(mutation) {
-			//     console.log(mutation.type);
-			//   });    
-			// });
-
-			// var config = { attributes: true, childList: true, characterData: true };
-
-			// observer.observe(anElement, config);
-
-			// anElement.addEventListener('DOMNodeInserted', function(e) {
-			// 	println("**************************************************");
-			// 	if (cb) cb();
-			// });
-
-			// document.body.removeChild(frame);
-			// anElement.appendChild(el);
-
-			anElement.innerHTML = html;
+			anElement.innerHTML = self.render();;
 			if (cb) cb();
 		}
-	});
-
-	return self;
-};
-
-/**
- * Init
- */
-View.prototype.refreshHTML = function(cb) {
-	var self = this;
-
-	self.enqueue(function() {
-		if (cb) cb(self.render());
 	});
 
 	return self;
@@ -243,6 +245,21 @@ View.prototype.render = function() {
 	self.renderedHTML = self.template(locals);
 	return self.renderedHTML;
 };
+
+/**
+ * Render to HTML asynchronously
+ */
+View.prototype.renderHTML = function(cb) {
+	var self = this;
+
+	self.enqueue(function() {
+		if (cb) cb(self.render());
+	});
+
+	return self;
+};
+
+
 
 var Ishmael = function(){
 
