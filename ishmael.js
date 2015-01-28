@@ -126,6 +126,12 @@ var App = function(aViewController) {
 	this.viewControllers = [];
 	
 
+	this.makeSearchFriendly = function(aString) {
+		return aString.replace(/^\s+/, '')
+					.replace(/\s+$/, '')
+					.replace(/\s+/, ' ')
+					.toLocaleLowerCase();
+	};
 	if (aViewController) {
 		this.viewControllers.push(aViewController);
 	} 
@@ -215,40 +221,48 @@ View.prototype.init = function(cb) {
 	 * Generate a UUID, set ourselves as initialized, run the queue, and do our callback.
 	 */
 	var initDone = function() {
-		uuid().generate(function(uuid) {
+		var initialize = function(uuid) {
 			self.uniqueId = uuid;
 			self.initialized = true;
 			self.queue.flush();
 			if (cb) cb(null, self.uniqueId);
-		});
+		};
+		if (self.uniqueId == null) {
+			uuid().generate(initialize);
+		} else {
+			initialize();
+		}
 	};
 
 
 	var doInit = function() {
 		psh().getTemplateFunction(self.viewName, function(err, func){
 			self.template = func;
-
-			if (self.subviews.length > 0) {
-				var i = 0;
-				var nextFunction = function() {
-					if (i < self.subviews.length) {
-						self.subviews[i++].init(function(){
-							nextFunction();
-						});
-					} else {
-						initDone();
-					}
-				};
-				nextFunction();
-			} else {
-				initDone();
-			}
+			self.initializeSubviews(initDone);
 		});
 	}();
 	return self;
 };
 
+View.prototype.initializeSubviews = function(cb){
+	var self = this;
 
+	if (self.subviews.length > 0) {
+		var i = 0;
+		var nextFunction = function() {
+			if (i < self.subviews.length) {
+				self.subviews[i++].init(function(){
+					nextFunction();
+				});
+			} else {
+				if (cb) cb();
+			}
+		};
+		nextFunction();
+	} else {
+		if (cb) cb();
+	}
+};
 
 View.prototype.enqueue = function(aFunction){
 	var self = this;
@@ -256,6 +270,7 @@ View.prototype.enqueue = function(aFunction){
 	if ((!self.initStarted) && (!self.initialized)) {
 		self.init();
 	}
+
 
 	// Here we intentionally check to see if we're initialized
 	// right away. If we just called init(), we want to queue the callback.
@@ -279,8 +294,11 @@ View.prototype.bind = function(anApp, anElement, cb) {
 
 	self.enqueue(function() {
 		if (anElement) {
+			println("Trying to bind " + self.name);
 			anElement.innerHTML = self.render(true);
 			if (cb) cb(null, self.uniqueId);
+		} else {
+			println("Error! No element!");
 		}
 	});
 
@@ -312,20 +330,27 @@ View.prototype.update = function(cb) {
 		return;
 	}
 
-	self.enqueue(function() {
-		var err = null;
-		var elements = document.querySelectorAll("[data-ish=\"" + self.uniqueId + "\"]");
+	if (!self.initialized) {
+		return;
+	}
 
-		if (elements.length > 0) {
-			var anElement = elements[0];
-			var dummy = document.createElement('div');
-			dummy.innerHTML = self.render(true);
-			anElement.parentNode.replaceChild(dummy.firstChild, anElement);
-			dummy = null;
-		} else {
-			println("Warning: Can't find element for view " + self.name + " (" + self.uniqueId + ")");
-		}
-		if (cb) cb(err, self.uniqueId);
+	self.enqueue(function() {
+		self.initializeSubviews(function() {
+			var err = null;
+			var elements = document.querySelectorAll("[data-ish=\"" + self.uniqueId + "\"]");
+
+			if (elements.length > 0) {
+				var anElement = elements[0];
+				var dummy = document.createElement('div');
+				dummy.innerHTML = self.render(true);
+				anElement.parentNode.replaceChild(dummy.firstChild, anElement);
+				dummy = null;
+			} else {
+				println("Warning: Can't find element for view " + self.name + " (" + self.uniqueId + ")");
+			}
+			if (cb) cb(err, self.uniqueId);
+		});
+
 	});
 
 	return self;
@@ -349,12 +374,14 @@ View.prototype.addSubview = function(aView) {
  */
 View.prototype.removeAllSubviews = function() {
 	var self = this;
+	println("Remove all subviews");
 
 	while (self.subviews.length > 0) {
 		var aSubview = self.subviews.pop();
 		aSubview.removeAllSubviews();
 	}
-	self.update();
+
+	// self.update();
 	return self;
 };
 
@@ -370,11 +397,17 @@ View.prototype.render = function(isBrowser) {
 		subviewString += self.subviews[i].render(isBrowser);
 	}
 
+	self.updateLocals();
 	self.locals['subviews'] = subviewString;
 
+	if (!self.template) {
+		println("No template for " + self.name + " (" + self.uniqueId + ")");
+	}
 	self.renderedHTML = self.template(self.locals);
 	if (isBrowser) {
+		// println("About to render " + self.name);
 		self.renderedHTML = self.renderedHTML.replace(/^([^<]*<[a-z0-9]+)([>\s])/i, "$1 data-ish=\"" + self.uniqueId + "\"$2");
+		// println("Came away with  " + self.renderedHTML);
 	}
 
 	return self.renderedHTML;
