@@ -182,10 +182,10 @@ var ViewController = function(aRoute, aView) {
  * View
  * @constructor
  */
-var View = function(viewName, aName, cb) {
+var View = function(templateName, aName, cb) {
 	var self = this;
 	this.queue = new Queue();
-	this.viewName = viewName || null;
+	this.templateName = templateName || null;
 	this.template = null;
 	this.subviews = [];
 	this.renderedHTML = '';
@@ -236,7 +236,7 @@ View.prototype.init = function(cb) {
 
 
 	var doInit = function() {
-		psh().getTemplateFunction(self.viewName, function(err, func){
+		psh().getTemplateFunction(self.templateName, function(err, func){
 			self.template = func;
 			self.initializeSubviews(initDone);
 		});
@@ -314,6 +314,7 @@ View.prototype.updateLocals = function(cb) {
 	var self = this;
 	var err = null;
 	// No op for now
+	self.locals['name'] = self.name;
 	if (cb) cb(err, self.uniqueId);
 	return self;
 };
