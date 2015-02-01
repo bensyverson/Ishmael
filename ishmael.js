@@ -52,7 +52,6 @@ var _ = _ || require('./lodash.js');
 
 
 
-
 /**
  * Endpoint
  * @constructor
@@ -216,6 +215,7 @@ View.prototype.init = function(cb) {
 	var self = this;
 
 	self.initStarted = true;
+	self.locals = {};
 	
 	/* 
 	 * Generate a UUID, set ourselves as initialized, run the queue, and do our callback.
@@ -289,7 +289,7 @@ View.prototype.enqueue = function(aFunction){
  * @param {Element} anElement The container element in the DOM
  * @param {Function} cb A callback
  */
-View.prototype.bind = function(anApp, anElement, cb) {
+View.prototype.bindToAppElement = function(anApp, anElement, cb) {
 	var self = this;
 
 	self.enqueue(function() {
