@@ -244,6 +244,16 @@ View.prototype.init = function(cb) {
 	return self;
 };
 
+View.prototype.element = function(){
+	var self = this;
+	var elements = document.querySelectorAll("[data-ish=\"" + self.uniqueId + "\"]");
+	if (elements.length > 0) {
+		return elements[0];
+	} else {
+		return null;
+	}
+};
+
 View.prototype.initializeSubviews = function(cb){
 	var self = this;
 
@@ -332,6 +342,7 @@ View.prototype.update = function(cb) {
 	}
 
 	if (!self.initialized) {
+		println("NOT INITIALIZED!");
 		return;
 	}
 
