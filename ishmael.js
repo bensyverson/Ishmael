@@ -32,8 +32,8 @@
 
 var require = require || function(){ return null; };
 
-var _PutStuffHere = require('./putstuffhere.js') || PutStuffHere ;
-var psh = psh || (_PutStuffHere ? _PutStuffHere.shared : null);
+var _PutStuffHere = require('./putstuffhere.js') || PutStuffHere;
+var psh = (_PutStuffHere ? _PutStuffHere.shared : null) || psh;
 
 /**
  * Put Stuff Here doesn't know about Ishmael.
@@ -41,7 +41,7 @@ var psh = psh || (_PutStuffHere ? _PutStuffHere.shared : null);
  */
 psh().setDefaultHTML("<div>put subviews (unescaped) here</div>");
 
-var _uuid = Autoincrementer || require('./autoincrementer.js');
+var _uuid = require('./autoincrement.js') || Autoincrementer;
 var uuid = uuid || (_uuid ? _uuid.shared : null);
 
 var _Queue = require('./queue.js');
