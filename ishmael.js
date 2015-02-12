@@ -29,17 +29,17 @@
  */
 
 // flask stubb starbuck harpoon 
+var println = function(arg){console.log(arg);};
 
 var require = require || function(){ return null; };
 
-var _PutStuffHere = require('./putstuffhere.js') || PutStuffHere;
-var psh = (_PutStuffHere ? _PutStuffHere.shared : null) || psh;
-
+var psh = require('./putstuffhere.js').shared;
+if (typeof(PutStuffHere) !== typeof(undefined)) psh = PutStuffHere.shared;
 /**
  * Put Stuff Here doesn't know about Ishmael.
  * We'll insert `subviews (unescaped)` so Views can insert subviews.
  */
-psh().setDefaultHTML("<div>put subviews (unescaped) here</div>");
+// psh().setDefaultHTML("<div>put subviews (unescaped) here</div>");
 
 var _uuid = require('./autoincrement.js') || Autoincrementer;
 var uuid = uuid || (_uuid ? _uuid.shared : null);
@@ -473,4 +473,7 @@ var Ishmael = function(){
 // Ishmael();
 
 var module = module || {};
-module.exports = module.exports || {};
+module.exports = {
+	View: View,
+
+};
