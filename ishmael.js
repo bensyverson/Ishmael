@@ -41,7 +41,7 @@ var psh = psh || (_PutStuffHere ? _PutStuffHere.shared : null);
  */
 psh().setDefaultHTML("<div>put subviews (unescaped) here</div>");
 
-var _uuid = require('./uuid.js') || UUID;
+var _uuid = Autoincrementer || require('./autoincrementer.js');
 var uuid = uuid || (_uuid ? _uuid.shared : null);
 
 var _Queue = require('./queue.js');
@@ -224,17 +224,10 @@ View.prototype.init = function(cb) {
 	 * Generate a UUID, set ourselves as initialized, run the queue, and do our callback.
 	 */
 	var initDone = function() {
-		var initialize = function(uuid) {
-			self.uniqueId = uuid;
-			self.initialized = true;
-			self.queue.flush();
-			if (cb) cb(null, self.uniqueId);
-		};
-		if (self.uniqueId == null) {
-			uuid().generate(initialize);
-		} else {
-			initialize();
-		}
+		self.uniqueId = uuid().generate();
+		self.initialized = true;
+		self.queue.flush();
+		if (cb) cb(null, self.uniqueId);
 	};
 
 
