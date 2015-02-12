@@ -46,9 +46,13 @@ var ishmael = require('./dependencies/ishmael.js');
 var MyWaterline = require('waterline');
 var sailsAdapter = require('waterline-sails');
 
-var init = function(collections) {
+if (typeof sails === typeof(undefined)) {
+	window.sails = {};
+}
+
+var init = function() {
 	// As an example, search for a User with id: 1
-	collections.user.findOne({ id: 1})
+	sails.models.user.findOne({ id: 1})
 		.exec(function(err, model) {
 			if (err) {
 				println(err);
@@ -61,7 +65,7 @@ var init = function(collections) {
 };
 
 var serverInit = function() {
-	init(sails.models);
+	init();
 };
 
 var browserInit = function() {
@@ -101,14 +105,23 @@ var browserInit = function() {
 
 	myOrm.initialize(config, function(err, models) {
 		if(err) throw err;
-		init(models.collections);
+		sails.models = models.collections;
+		init();
 	});
 };
 
+var doInit = function() {
+	if (isBrowser) {
+		window.addEventListener('DOMContentLoaded', browserInit);
+	} else {
+		serverInit();
+	}
+}
+
 if (isBrowser) {
-	browserInit();
+	doInit();
 }
 
 module.exports = {
-	initialize: serverInit,
+	initialize: doInit,
 };
