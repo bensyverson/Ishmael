@@ -51,7 +51,15 @@ var println = println || function(e) { console.log(e) };
 
 var _ = _ || require('./lodash.js');
 
-
+/**
+ * 
+ */
+String.prototype.makeSearchFriendly = function() {
+	return this.replace(/^\s+/, '')
+				.replace(/\s+$/, '')
+				.replace(/\s+/, ' ')
+				.toLocaleLowerCase();
+};
 
 
 /**
@@ -126,13 +134,6 @@ var App = function(aViewController) {
 
 	this.viewControllers = [];
 	
-
-	this.makeSearchFriendly = function(aString) {
-		return aString.replace(/^\s+/, '')
-					.replace(/\s+$/, '')
-					.replace(/\s+/, ' ')
-					.toLocaleLowerCase();
-	};
 	if (aViewController) {
 		this.viewControllers.push(aViewController);
 	} 
