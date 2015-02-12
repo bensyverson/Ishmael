@@ -30,8 +30,9 @@
 
 // flask stubb starbuck harpoon 
 
-var require = require || function(){};
-var _PutStuffHere = PutStuffHere || require('./putstuffhere.js');
+var require = require || function(){ return null; };
+
+var _PutStuffHere = require('./putstuffhere.js') || PutStuffHere ;
 var psh = psh || (_PutStuffHere ? _PutStuffHere.shared : null);
 
 /**
@@ -40,7 +41,7 @@ var psh = psh || (_PutStuffHere ? _PutStuffHere.shared : null);
  */
 psh().setDefaultHTML("<div>put subviews (unescaped) here</div>");
 
-var _uuid = UUID || require('./uuid.js');
+var _uuid = require('./uuid.js') || UUID;
 var uuid = uuid || (_uuid ? _uuid.shared : null);
 
 var _Queue = require('./queue.js');
@@ -49,6 +50,7 @@ var Queue = Queue || (_Queue ? _Queue.Queue : null);
 var println = println || function(e) { console.log(e) };
 
 var _ = _ || require('./lodash.js');
+
 
 
 
@@ -215,7 +217,6 @@ View.prototype.init = function(cb) {
 	var self = this;
 
 	self.initStarted = true;
-	self.locals = {};
 	
 	/* 
 	 * Generate a UUID, set ourselves as initialized, run the queue, and do our callback.
@@ -242,16 +243,6 @@ View.prototype.init = function(cb) {
 		});
 	}();
 	return self;
-};
-
-View.prototype.element = function(){
-	var self = this;
-	var elements = document.querySelectorAll("[data-ish=\"" + self.uniqueId + "\"]");
-	if (elements.length > 0) {
-		return elements[0];
-	} else {
-		return null;
-	}
 };
 
 View.prototype.initializeSubviews = function(cb){
@@ -299,7 +290,7 @@ View.prototype.enqueue = function(aFunction){
  * @param {Element} anElement The container element in the DOM
  * @param {Function} cb A callback
  */
-View.prototype.bindToAppElement = function(anApp, anElement, cb) {
+View.prototype.bind = function(anApp, anElement, cb) {
 	var self = this;
 
 	self.enqueue(function() {
@@ -342,7 +333,6 @@ View.prototype.update = function(cb) {
 	}
 
 	if (!self.initialized) {
-		println("NOT INITIALIZED!");
 		return;
 	}
 
