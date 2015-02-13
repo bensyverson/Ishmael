@@ -29,12 +29,12 @@
  */
 
 // flask stubb starbuck harpoon 
-var println = function(arg){console.log(arg);};
+if (typeof(require) === typeof(undefined)) window.require = function(){return null;};
 
-var require = require || function(){ return null; };
+var println = println || function(e) { console.log(e) };
 
-var psh = require('./putstuffhere.js').shared;
-if (typeof(PutStuffHere) !== typeof(undefined)) psh = PutStuffHere.shared;
+var PutStuffHere = require('./putstuffhere.js') || PutStuffHere;
+
 /**
  * Put Stuff Here doesn't know about Ishmael.
  * We'll insert `subviews (unescaped)` so Views can insert subviews.
@@ -44,12 +44,19 @@ if (typeof(PutStuffHere) !== typeof(undefined)) psh = PutStuffHere.shared;
 var _uuid = require('./autoincrement.js') || Autoincrementer;
 var uuid = uuid || (_uuid ? _uuid.shared : null);
 
-var _Queue = require('./queue.js');
-var Queue = Queue || (_Queue ? _Queue.Queue : null);
-
-var println = println || function(e) { console.log(e) };
-
 var _ = _ || require('./lodash.js');
+
+var OrgStuffHereQueue = OrgStuffHereQueue || null;
+var q = require('./queue.js') || OrgStuffHereQueue;
+
+
+if (typeof sails === typeof(undefined)) {
+	window.sails = {};
+}
+
+String.prototype.hasPrefix = function(prefix) {
+    return this.indexOf(prefix) === 0;
+}
 
 /**
  * 
@@ -118,6 +125,14 @@ var Router = function(routes) {
 	this.routes = routes || {};
 };
 
+Router.prototype.itemForRoute = function(aPath) {
+	var self = this;
+
+	// TODO
+	return self.routes[0];
+	
+	return null;
+};
 
 
 
@@ -151,6 +166,16 @@ App.prototype.init = function() {
 };
 
 /**
+ * Bootstrap, a method called by the browser to get ourselves going.
+ */
+App.prototype.bootstrap = function() {
+	var self = this;
+
+	self.init();
+	println("Hello world.");
+};
+
+/**
  * Get Root View Controller
  */
 App.prototype.rootViewController = function() {
@@ -158,6 +183,19 @@ App.prototype.rootViewController = function() {
 	return self.viewControllers[0];
 };
 
+/**
+ *
+ */
+ App.prototype.viewControllerForRoute = function(aPath) {
+ 	var self = this;
+ 	for (var i = 0; i < self.viewControllers.length; i++) {
+ 		if (aPath.hasPrefix(self.viewControllers[i].route)) {
+ 			return self.viewControllers[i];
+ 		}
+ 	}
+ 	return null;
+ 	//return self.router.itemForRoute(aPath) || new ViewController('../templates/index.html');
+ };
 
 
 /**
@@ -175,8 +213,26 @@ App.prototype.addViewController = function(aViewController) {
  */
 var ViewController = function(aRoute, aView) {
 	// TODO
-	this.view = aView || new View('untitled.html', 'Untitled');
-	this.route = aRoute || 'default';
+	this.view = aView;
+	this.route = aRoute;
+};
+
+/**
+ * Render the View Controller
+ */
+ViewController.prototype.render = function() {
+	var self = this;
+	return self.view.render();
+};
+
+
+/**
+ * Initialize the View Controller
+ */
+ViewController.prototype.init = function(cb) {
+	var self = this;
+
+	self.view.init(cb);
 };
 
 
@@ -186,7 +242,7 @@ var ViewController = function(aRoute, aView) {
  */
 var View = function(templateName, aName, cb) {
 	var self = this;
-	this.queue = new Queue();
+	this.queue = new q();
 	this.templateName = templateName || null;
 	this.template = null;
 	this.subviews = [];
@@ -232,7 +288,7 @@ View.prototype.init = function(cb) {
 
 
 	var doInit = function() {
-		psh().getTemplateFunction(self.templateName, function(err, func){
+		PutStuffHere.shared().getTemplateFunction(self.templateName, function(err, func){
 			self.template = func;
 			self.initializeSubviews(initDone);
 		});
@@ -472,8 +528,9 @@ var Ishmael = function(){
 
 // Ishmael();
 
-var module = module || {};
+if (typeof(module) === typeof(undefined)) window.module = {};
 module.exports = {
 	View: View,
-
+	App: App,
+	ViewController: ViewController,
 };
