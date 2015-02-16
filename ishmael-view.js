@@ -21,6 +21,8 @@ var View = function(templateName, aName, cb) {
 	this.superview = null;
 	this.uniqueId = null;
 
+	this.classes = [];
+
 	this.locals = {};
 
 	this.name = aName || 'Anonymous View';
@@ -69,6 +71,32 @@ View.prototype.init = function(cb) {
 	}();
 	return self;
 };
+
+View.prototype.addClass = function(className){
+	var self = this;
+
+	for (var i = 0; i < self.classes.length; i++) {
+		if (self.classes[i] == className) return;
+	}
+	self.classes.push(className);
+};
+
+View.prototype.removeClass = function(className){
+	var self = this;
+
+	var index = -1;
+	for (var i = 0; i < self.classes.length; i++) {
+		if (self.classes[i] == className) {
+			index = i;
+			break;
+		}
+	}
+	if (index >= 0) {
+		self.classes.splice(index, 1);
+	}
+};
+
+
 
 View.prototype.element = function(){
 	var self = this;
@@ -266,10 +294,24 @@ View.prototype.render = function(isBrowser) {
 		println("No template for " + self.name + " (" + self.uniqueId + ")");
 	}
 	self.renderedHTML = self.template(self.locals);
+
+	// Add data attribute for our unique id
 	if (isBrowser) {
-		// println("About to render " + self.name);
-		self.renderedHTML = self.renderedHTML.replace(/^([^<]*<[a-z0-9]+)([>\s])/i, "$1 data-ish=\"" + self.uniqueId + "\"$2");
-		// println("Came away with  " + self.renderedHTML);
+		self.renderedHTML = self.renderedHTML
+			.replace(/^([^<]*<[a-z0-9]+)([>\s])/i, "$1 data-ish=\"" + self.uniqueId + "\"$2");
+	}
+
+	// add our classes
+	var classList = self.classes.join(' ');
+	if (classList != '') {
+		if (self.renderedHTML.match(/^[^<]*<[a-z0-9]+\s+[^>]+class\s*=/i)) {
+			self.renderedHTML = self.renderedHTML
+				.replace(/^([^<]*<[a-z0-9]+\s+[^>]+)\sclass\s*=\s*"([^"]+)"/i, "$1 class=\"$2 " + classList + "\"");
+		} else {
+			self.renderedHTML = self.renderedHTML
+				.replace(/^([^<]*<[^>]+)>/i, "$1 class=\"" + classList + "\">");
+		}
+		println(self.renderedHTML);
 	}
 
 	return self.renderedHTML;
@@ -283,7 +325,7 @@ View.prototype.renderHTML = function(cb) {
 	var self = this;
 
 	self.enqueue(function() {
-		if (cb) cb(self.render());
+		if (typeof(cb) === typeof(function(){})) cb(self.render());
 	});
 
 	return self;

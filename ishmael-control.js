@@ -85,11 +85,13 @@ Control.prototype.removeTargetActionForControlEvents = function(aTargetAction, a
 Control.prototype.sendActionsForControlEvents = function(controlEvents)
 {
 	var self = this;
+	var controlEventMask = controlEvents | 0;
+	
 	for (var key in self.eventTargets) {
 		if (self.eventTargets.hasOwnProperty(key)) {
-			if ((controlEvents & parseInt(key)) != 0) {
+			if ((controlEventMask & parseInt(key)) != 0) {
 				for (var i = 0; i < self.eventTargets[key].length; i++) {
-					var anEvent = new IDEvent(IDEventNameGeneric, controlEvents);
+					var anEvent = new IDEvent(IDEventNameGeneric, controlEventMask);
 					self.eventTargets[key][i](self, anEvent); // Actually run the control
 				}
 			}
