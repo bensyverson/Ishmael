@@ -259,9 +259,7 @@ View.prototype.update = function(cb) {
 				self.activate();
 
 				dummy = null;
-			} else {
-				println("Warning: Can't find element for view " + self.name + " (" + self.uniqueId + ")");
-			}
+			} 
 			if (cb) cb(err, self.uniqueId);
 		});
 	});

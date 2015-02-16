@@ -1,6 +1,7 @@
 var View = View || require('./ishmael-view.js');
 var ViewController = ViewController || require('./ishmael-viewcontroller.js');
 var Router = Router || require('./ishmael-router.js');
+var i18n = i18n || require('i18next');
 
 /**
  * App object
@@ -37,10 +38,15 @@ App.prototype.bootstrap = function(anId) {
 	var self = this;
 
 	//self.init();
-	self.rootViewController().loadView();
-	self.rootViewController().viewWillAppear();
+	var option = { resGetPath: '../locales/__lng__/__ns__.json' };
 
-	self.rootViewController().view.bindToAppElement(self, document.getElementById(anId));
+	i18n.init(option, function() {
+		self.rootViewController().loadView();
+		self.rootViewController().viewWillAppear();
+
+		self.rootViewController().view.bindToAppElement(self, document.getElementById(anId));
+	});
+
 };
 
 /**
