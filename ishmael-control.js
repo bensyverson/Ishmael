@@ -1,6 +1,7 @@
 
 var View = View || require('./ishmael-view.js');
 var IDEvent = IDEvent || require('./ishmael-idevent.js');
+var nil = null;
 
 /**
  * Simple control wrapper
@@ -98,5 +99,61 @@ Control.prototype.sendActionsForControlEvents = function(controlEvents)
 		}
 	}
 };
+
+
+/**
+ * Touch event handler. If the Control wants to respond, it can.
+ * @param {Event} anEvent The touch Event
+ * @return {bool} A boolean indicating whether we handled this event
+ */
+Control.prototype.didReceiveTouch = function(anEvent) {
+	var self = this;
+	if (self.touchesBeganWithEvent) {
+		var element = self.element();
+		var handleTouchMove = nil;
+		var handleTouchEnd = nil;
+		var handleTouchCancel = nil;
+
+
+		if (self.touchesMovedWithEvent) {
+			handleTouchMove = function(moveEvent) {
+				return self.touchesMovedWithEvent(moveEvent);
+			};
+		}
+
+		if (self.touchesEndedWithEvent) {
+			handleTouchEnd = function(endEvent) {
+				element.removeEventListener('touchmove', handleTouchMove, false);
+				element.removeEventListener('touchend', handleTouchEnd, false);
+				element.removeEventListener('touchcancel', handleTouchCancel, false);
+				element.removeEventListener('mouseup', handleTouchEnd, false);
+				return self.touchesEndedWithEvent(endEvent);
+			};
+		}
+
+		if (self.touchesCancelledWithEvent) {
+			handleTouchCancel = function(endEvent) {
+				element.removeEventListener('touchmove', handleTouchMove, false);
+				element.removeEventListener('touchend', handleTouchEnd, false);
+				element.removeEventListener('touchcancel', handleTouchCancel, false);
+				element.removeEventListener('mouseup', handleTouchEnd, false);
+				return self.touchesCancelledWithEvent(endEvent);
+			};
+		}
+
+		if (handleTouchMove) element.addEventListener('touchmove', handleTouchMove, false);
+
+		if (handleTouchEnd) element.addEventListener('touchend', handleTouchEnd, false);
+		if (handleTouchEnd) element.addEventListener('mouseup', handleTouchEnd, false);
+
+		if (handleTouchCancel) element.addEventListener('touchcancel', handleTouchCancel, false);
+
+		return self.touchesBeganWithEvent(anEvent);
+	} else {
+		//NSLog(self.superview);
+		//if (self.superview) return self.didReceiveTouch.call(self.superview, anEvent);
+	}
+	return true;
+}
 
 module.exports = Control;

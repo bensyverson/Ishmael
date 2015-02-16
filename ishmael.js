@@ -32,7 +32,7 @@
 if (typeof(require) === typeof(undefined)) window.require = function(){return null;};
 
 var println = println || function(e) { console.log(e) };
-
+var nil = null;
 
 /**
  * Put Stuff Here doesn't know about Ishmael.

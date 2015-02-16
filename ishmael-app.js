@@ -36,8 +36,7 @@ App.prototype.init = function() {
 App.prototype.bootstrap = function() {
 	var self = this;
 
-	self.init();
-	
+	//self.init();
 	self.rootViewController().view.bindToAppElement(self, document.getElementById('app'));
 };
 

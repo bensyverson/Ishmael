@@ -13,7 +13,9 @@ var uuid = uuid || (_uuid ? _uuid.shared : null);
  */
 var View = function(templateName, aName, cb) {
 	var self = this;
+
 	this.queue = new q();
+	this.templateConst = "<div>put subviews (unescaped) here</div>";
 	this.templateName = templateName || null;
 	this.template = null;
 	this.subviews = [];
@@ -33,9 +35,6 @@ var View = function(templateName, aName, cb) {
 	this.initialized = false;
 	this.initStarted = false;
 
-	if (cb) {
-		this.init(cb);
-	}
 };
 
 
@@ -46,11 +45,13 @@ var View = function(templateName, aName, cb) {
 View.prototype.init = function(cb) {
 	var self = this;
 
+	if (self.initStarted && (!self.initialized)) {
+		self.enqueue(cb);
+		return;
+	}
+
 	self.initStarted = true;
 	self.locals = {};
-
-	self.subviews = [];
-	self.superview = null;
 
 	/* 
 	 * Generate a UUID, set ourselves as initialized, run the queue, and do our callback.
@@ -64,10 +65,15 @@ View.prototype.init = function(cb) {
 
 
 	var doInit = function() {
-		PutStuffHere.shared().getTemplateFunction(self.templateName, function(err, func){
-			self.template = func;
+		if (self.templateName) {
+			PutStuffHere.shared().getTemplateFunction(self.templateName, function(err, func){
+				self.template = func;
+				self.initializeSubviews(initDone);
+			});
+		} else {
+			self.template = PutStuffHere.shared().compileText(self.templateConst);
 			self.initializeSubviews(initDone);
-		});
+		}
 	}();
 	return self;
 };
@@ -159,8 +165,10 @@ View.prototype.bindToAppElement = function(anApp, anElement, cb) {
 
 	self.enqueue(function() {
 		if (anElement) {
-			println("Trying to bind " + self.name);
 			anElement.innerHTML = self.render(true);
+
+			self.activate();
+
 			if (cb) cb(null, self.uniqueId);
 		} else {
 			println("Error! No element!");
@@ -168,6 +176,19 @@ View.prototype.bindToAppElement = function(anApp, anElement, cb) {
 	});
 
 	return self;
+};
+
+
+/**
+ * Activate the view in the DOM.
+ */
+View.prototype.activate = function() {
+	var self = this;
+	
+	// Activate myself
+	for (var i = 0; i < self.subviews.length; i++) {
+		self.subviews[i].activate();
+	}
 };
 
 
@@ -210,13 +231,15 @@ View.prototype.update = function(cb) {
 				var dummy = document.createElement('div');
 				dummy.innerHTML = self.render(true);
 				anElement.parentNode.replaceChild(dummy.firstChild, anElement);
+
+				self.activate();
+
 				dummy = null;
 			} else {
 				println("Warning: Can't find element for view " + self.name + " (" + self.uniqueId + ")");
 			}
 			if (cb) cb(err, self.uniqueId);
 		});
-
 	});
 
 	return self;
@@ -269,7 +292,7 @@ View.prototype.removeAllSubviews = function() {
 	var self = this;
 
 	while (self.subviews.length > 0) {
-		aSubview.removeFromSuperview();
+		self.subviews.pop().removeFromSuperview();
 	}
 	
 	return self;
@@ -282,19 +305,19 @@ View.prototype.removeAllSubviews = function() {
 View.prototype.render = function(isBrowser) {
 	var self = this;
 
-	var subviewString = '';
-	for (var i = 0; i < self.subviews.length; i++) {
-		subviewString += self.subviews[i].render(isBrowser);
-	}
-
+	var subviewString = self.subviews
+							.map(function(v){ return v.render(isBrowser); })
+							.join('');
+	
 	self.updateLocals();
 	self.locals['subviews'] = subviewString;
 
 	if (!self.template) {
 		println("No template for " + self.name + " (" + self.uniqueId + ")");
+		self.renderedHTML = '<div><!--ERROR--></div>';
+	} else {
+		self.renderedHTML = self.template(self.locals);
 	}
-	self.renderedHTML = self.template(self.locals);
-
 	// Add data attribute for our unique id
 	if (isBrowser) {
 		self.renderedHTML = self.renderedHTML
@@ -302,8 +325,8 @@ View.prototype.render = function(isBrowser) {
 	}
 
 	// add our classes
-	var classList = self.classes.join(' ');
-	if (classList != '') {
+	if (self.classes.length > 0) {
+		var classList = self.classes.join(' ');
 		if (self.renderedHTML.match(/^[^<]*<[a-z0-9]+\s+[^>]+class\s*=/i)) {
 			self.renderedHTML = self.renderedHTML
 				.replace(/^([^<]*<[a-z0-9]+\s+[^>]+)\sclass\s*=\s*"([^"]+)"/i, "$1 class=\"$2 " + classList + "\"");
@@ -311,7 +334,6 @@ View.prototype.render = function(isBrowser) {
 			self.renderedHTML = self.renderedHTML
 				.replace(/^([^<]*<[^>]+)>/i, "$1 class=\"" + classList + "\">");
 		}
-		println(self.renderedHTML);
 	}
 
 	return self.renderedHTML;
@@ -332,3 +354,4 @@ View.prototype.renderHTML = function(cb) {
 };
 
 module.exports = View;
+
