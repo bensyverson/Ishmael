@@ -1,0 +1,1 @@
+var Waterline = require('waterline');
