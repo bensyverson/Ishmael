@@ -1,4 +1,4 @@
-var Control = Control || require('./ishmael-control');
+var Control = Control || require('./ishmael-control.js');
 
 var UIButton = function(templateName, aName, cb) {
 	var self = this;
@@ -23,7 +23,6 @@ UIButton.prototype.activate = function() {
 
 	element.addEventListener('touchstart', function(e){ return self.didReceiveTouch(e);}, false);
 	element.addEventListener('mousedown', function(e){ return self.didReceiveTouch(e);}, false);
-
 
 	View.prototype.activate.call(this);
 };
