@@ -33,23 +33,12 @@ if (typeof(require) === typeof(undefined)) window.require = function(){return nu
 
 var println = println || function(e) { console.log(e) };
 
-var PutStuffHere = require('./putstuffhere.js') || PutStuffHere;
 
 /**
  * Put Stuff Here doesn't know about Ishmael.
  * We'll insert `subviews (unescaped)` so Views can insert subviews.
  */
 // psh().setDefaultHTML("<div>put subviews (unescaped) here</div>");
-
-var _uuid = require('./autoincrement.js') || Autoincrementer;
-var uuid = uuid || (_uuid ? _uuid.shared : null);
-
-var _ = _ || require('./lodash.js');
-
-var OrgStuffHereQueue = OrgStuffHereQueue || null;
-var q = require('./queue.js') || OrgStuffHereQueue;
-
-var App = App || require('./ishamel-app.js');
 
 
 if (typeof sails === typeof(undefined)) {

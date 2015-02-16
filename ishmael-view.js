@@ -1,5 +1,11 @@
 var PutStuffHere = PutStuffHere || require('./putstuffhere.js');
-var q = q || require('./queue.js');
+
+var OrgStuffHereQueue = OrgStuffHereQueue || null;
+var q = require('./queue.js') || OrgStuffHereQueue;
+
+var _uuid = require('./autoincrement.js') || Autoincrementer;
+var uuid = uuid || (_uuid ? _uuid.shared : null);
+
 
 /**
  * View
