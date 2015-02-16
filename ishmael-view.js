@@ -35,6 +35,7 @@ var View = function(templateName, aName, cb) {
 	this.initialized = false;
 	this.initStarted = false;
 
+	self.uniqueId = uuid().generate();
 };
 
 
@@ -51,13 +52,11 @@ View.prototype.init = function(cb) {
 	}
 
 	self.initStarted = true;
-	self.locals = {};
 
 	/* 
-	 * Generate a UUID, set ourselves as initialized, run the queue, and do our callback.
+	 * Set ourselves as initialized, run the queue, and do our callback.
 	 */
 	var initDone = function() {
-		self.uniqueId = uuid().generate();
 		self.initialized = true;
 		self.queue.flush();
 		if (cb) cb(null, self.uniqueId);
@@ -142,7 +141,6 @@ View.prototype.enqueue = function(aFunction){
 		self.init();
 	}
 
-
 	// Here we intentionally check to see if we're initialized
 	// right away. If we just called init(), we want to queue the callback.
 	if (self.initialized) {
@@ -164,15 +162,19 @@ View.prototype.bindToAppElement = function(anApp, anElement, cb) {
 	var self = this;
 
 	self.enqueue(function() {
-		if (anElement) {
-			anElement.innerHTML = self.render(true);
+		self.layoutSubviews();
 
-			self.activate();
+		self.initializeSubviews(function() {
+			if (anElement) {
+				anElement.innerHTML = self._render(true);
 
-			if (cb) cb(null, self.uniqueId);
-		} else {
-			println("Error! No element!");
-		}
+				self.activate();
+
+				if (cb) cb(null, self.uniqueId);
+			} else {
+				println("No root element!");
+			}
+		});
 	});
 
 	return self;
@@ -201,7 +203,27 @@ View.prototype.updateLocals = function(cb) {
 	var err = null;
 	// No op for now
 	self.locals['name'] = self.name;
-	if (cb) cb(err, self.uniqueId);
+	if (cb) cb(null, self.uniqueId);
+	return self;
+};
+
+/**
+ * Layout subviews
+ * @param {Function} cb A callback
+ */
+View.prototype.layoutSubviews = function() {
+	var self = this;
+
+	// First update our locals. This gives subclasses a chance to set locals based on a custom object, data source, time of day, etc.
+	self.updateLocals();
+
+	// The locals above
+
+	// Activate myself
+	for (var i = 0; i < self.subviews.length; i++) {
+		self.subviews[i].layoutSubviews();
+	}
+
 	return self;
 };
 
@@ -212,16 +234,18 @@ View.prototype.updateLocals = function(cb) {
 View.prototype.update = function(cb) {
 	var self = this;
 
-	if (window === 'undefined') {
-		println("Can't update in Node.");
+	// Just ignore if we're not in the browser.
+	if (typeof (window) === typeof(undefined)) {
 		return;
 	}
 
-	if (!self.initialized) {
-		return;
-	}
+	// if (!self.initialized) {
+	// 	return;
+	// }
 
 	self.enqueue(function() {
+		self.layoutSubviews();
+
 		self.initializeSubviews(function() {
 			var err = null;
 			var elements = document.querySelectorAll("[data-ish=\"" + self.uniqueId + "\"]");
@@ -302,29 +326,32 @@ View.prototype.removeAllSubviews = function() {
 /**
  * Render
  */
-View.prototype.render = function(isBrowser) {
+View.prototype._render = function(isBrowser) {
 	var self = this;
 
+	// Now we can concatenate all of our subviews together.
 	var subviewString = self.subviews
-							.map(function(v){ return v.render(isBrowser); })
+							.map(function(v){ return v._render(isBrowser); })
 							.join('');
 	
-	self.updateLocals();
+	// `subviews` is a magic keyword in Ishmael. If you have an entry in self.locals named `subviews` it will be overwritten **silently**.
 	self.locals['subviews'] = subviewString;
 
 	if (!self.template) {
+		// Unless you've unset self.template, this should not happen.
 		println("No template for " + self.name + " (" + self.uniqueId + ")");
 		self.renderedHTML = '<div><!--ERROR--></div>';
 	} else {
 		self.renderedHTML = self.template(self.locals);
 	}
-	// Add data attribute for our unique id
+
+	// Add data attribute for our unique id so we can access it via self.element()
 	if (isBrowser) {
 		self.renderedHTML = self.renderedHTML
 			.replace(/^([^<]*<[a-z0-9]+)([>\s])/i, "$1 data-ish=\"" + self.uniqueId + "\"$2");
 	}
 
-	// add our classes
+	// Add any class names to the root element. It's important not to add style classes via Ishmael—that should be left in the HTML template. The classes are for things like 'selected', which allow CSS to reflect our internal state. If you need more than a class name or two to represent the state, the change in view is probably best represented as a different View subclass.
 	if (self.classes.length > 0) {
 		var classList = self.classes.join(' ');
 		if (self.renderedHTML.match(/^[^<]*<[a-z0-9]+\s+[^>]+class\s*=/i)) {
@@ -347,7 +374,10 @@ View.prototype.renderHTML = function(cb) {
 	var self = this;
 
 	self.enqueue(function() {
-		if (typeof(cb) === typeof(function(){})) cb(self.render());
+		// Layout if needed. This lets a subclass change its layout (add/remove subviews) based on the locals.
+		self.layoutSubviews();
+
+		if (typeof(cb) === typeof(function(){})) cb(self._render());
 	});
 
 	return self;

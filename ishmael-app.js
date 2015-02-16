@@ -33,11 +33,14 @@ App.prototype.init = function() {
 /**
  * Bootstrap, a method called by the browser to get ourselves going.
  */
-App.prototype.bootstrap = function() {
+App.prototype.bootstrap = function(anId) {
 	var self = this;
 
 	//self.init();
-	self.rootViewController().view.bindToAppElement(self, document.getElementById('app'));
+	self.rootViewController().loadView();
+	self.rootViewController().viewWillAppear();
+
+	self.rootViewController().view.bindToAppElement(self, document.getElementById(anId));
 };
 
 /**
