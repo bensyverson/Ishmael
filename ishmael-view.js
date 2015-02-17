@@ -253,7 +253,7 @@ View.prototype.update = function(cb) {
 			if (elements.length > 0) {
 				var anElement = elements[0];
 				var dummy = document.createElement('div');
-				dummy.innerHTML = self.render(true);
+				dummy.innerHTML = self._render(true);
 				anElement.parentNode.replaceChild(dummy.firstChild, anElement);
 
 				self.activate();
@@ -307,7 +307,8 @@ View.prototype.removeFromSuperview = function() {
 			}
 		}
 		if (myIndex > -1) {
-			delete self.superview.subviews[myIndex];
+			self.superview.subviews.splice(myIndex, 1);
+//			delete self.superview.subviews[myIndex];
 		}
 	}
 
