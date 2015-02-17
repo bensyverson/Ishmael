@@ -281,6 +281,16 @@ View.prototype.addSubview = function(aView) {
 };
 
 /**
+ * Insert Subview
+ * @param {View} aView The View to add
+ */
+View.prototype.insertSubviewAtIndex = function(aView, anIndex) {
+	var self = this;
+	self.subviews.splice(anIndex, 0, aView);
+	aView.superview = self;
+};
+
+/**
  * Remove from superview
  * @param {View} aView The View to add
  */
