@@ -12,14 +12,12 @@ var uuid = uuid || (_uuid ? _uuid.shared : null);
  * @constructor
  */
 var View = function(templateName, aName, cb) {
-	var self = this;
-
+	// var self = this;
 	this.queue = new q();
 	this.templateConst = "<div>put subviews (unescaped) here</div>";
 	this.templateName = templateName || null;
 	this.template = null;
 	this.subviews = [];
-	this.renderedHTML = '';
 	this.superview = null;
 	this.uniqueId = null;
 
@@ -35,9 +33,8 @@ var View = function(templateName, aName, cb) {
 	this.initialized = false;
 	this.initStarted = false;
 
-	self.uniqueId = uuid().generate();
+	this.uniqueId = uuid().generate();
 };
-
 
 /**
  * Init
@@ -161,22 +158,15 @@ View.prototype.enqueue = function(aFunction){
 View.prototype.bindToAppElement = function(anApp, anElement, cb) {
 	var self = this;
 
-	self.enqueue(function() {
-		self.layoutSubviews();
-
-		self.initializeSubviews(function() {
-			if (anElement) {
-				anElement.innerHTML = self._render(true);
-
-				self.activate();
-
-				if (cb) cb(null, self.uniqueId);
-			} else {
-				println("No root element!");
-			}
+	if (anElement) {
+		self.renderHTML(function(html){
+			anElement.innerHTML = self._render(true);
+			self.activate();
+			if (cb) cb(null, self.uniqueId);
 		});
-	});
-
+	} else {
+		println("No root element!");	
+	}
 	return self;
 };
 
@@ -216,8 +206,6 @@ View.prototype.layoutSubviews = function() {
 
 	// First update our locals. This gives subclasses a chance to set locals based on a custom object, data source, time of day, etc.
 	self.updateLocals();
-
-	// The locals above
 
 	// Activate myself
 	for (var i = 0; i < self.subviews.length; i++) {
@@ -338,6 +326,7 @@ View.prototype.removeAllSubviews = function() {
 View.prototype._render = function(isBrowser) {
 	var self = this;
 
+	var renderedHTML = '';
 	// Now we can concatenate all of our subviews together.
 	var subviewString = self.subviews
 							.map(function(v){ return v._render(isBrowser); })
@@ -349,30 +338,32 @@ View.prototype._render = function(isBrowser) {
 	if (!self.template) {
 		// Unless you've unset self.template, this should not happen.
 		println("No template for " + self.name + " (" + self.uniqueId + ")");
-		self.renderedHTML = '<div><!--ERROR--></div>';
+		renderedHTML = '<div><!--ERROR--></div>';
 	} else {
-		self.renderedHTML = self.template(self.locals);
+		renderedHTML = self.template(self.locals);
 	}
 
 	// Add data attribute for our unique id so we can access it via self.element()
 	if (isBrowser) {
-		self.renderedHTML = self.renderedHTML
+		renderedHTML = renderedHTML
 			.replace(/^([^<]*<[a-z0-9]+)([>\s])/i, "$1 data-ish=\"" + self.uniqueId + "\"$2");
 	}
 
 	// Add any class names to the root element. It's important not to add style classes via Ishmael—that should be left in the HTML template. The classes are for things like 'selected', which allow CSS to reflect our internal state. If you need more than a class name or two to represent the state, the change in view is probably best represented as a different View subclass.
 	if (self.classes.length > 0) {
 		var classList = self.classes.join(' ');
-		if (self.renderedHTML.match(/^[^<]*<[a-z0-9]+\s+[^>]+class\s*=/i)) {
-			self.renderedHTML = self.renderedHTML
+		if (renderedHTML.match(/^[^<]*<[a-z0-9]+\s+[^>]+class\s*=/i)) {
+			renderedHTML = renderedHTML
 				.replace(/^([^<]*<[a-z0-9]+\s+[^>]+)\sclass\s*=\s*"([^"]+)"/i, "$1 class=\"$2 " + classList + "\"");
 		} else {
-			self.renderedHTML = self.renderedHTML
+			renderedHTML = renderedHTML
 				.replace(/^([^<]*<[^>]+)>/i, "$1 class=\"" + classList + "\">");
 		}
 	}
 
-	return self.renderedHTML;
+
+
+	return renderedHTML;
 };
 
 /**
@@ -386,11 +377,13 @@ View.prototype.renderHTML = function(cb) {
 		// Layout if needed. This lets a subclass change its layout (add/remove subviews) based on the locals.
 		self.layoutSubviews();
 
-		if (typeof(cb) === typeof(function(){})) cb(self._render());
+		self.initializeSubviews(function() {
+			if (typeof(cb) === typeof(function(){})) cb(self._render());	
+		});
 	});
 
 	return self;
 };
 
-module.exports = View;
 
+module.exports = View;
