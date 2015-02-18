@@ -1,17 +1,23 @@
 var View = View || require('./ishmael-view.js');
 
+var Representable = Representable || require('./ishmael.js');
+
 
 /**
  * A View Controller
  * @constructor
  */
 var ViewController = function(aRoute, aView) {
-	// TODO
+	Representable.call(this);
+
 	this.view = aView || new View();
 	this.route = aRoute;
 	this._childViewControllers =[];
 	this.parentViewController = null;
 };
+ViewController.prototype = Object.create(Representable.prototype);
+ViewController.prototype.constructor = ViewController;
+
 
 /**
  * Render the View Controller

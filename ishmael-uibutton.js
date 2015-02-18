@@ -19,7 +19,7 @@ UIButton.prototype.activate = function() {
 	var self = this;
 	
 	// Activate myself
-	var element = document.querySelectorAll("[data-ish=\"" + self.uniqueId + "\"]")[0];
+	var element = self.element();
 
 	element.addEventListener('touchstart', function(e){ return self.didReceiveTouch(e);}, false);
 	element.addEventListener('mousedown', function(e){ return self.didReceiveTouch(e);}, false);
@@ -32,7 +32,6 @@ UIButton.prototype.activate = function() {
  */
 UIButton.prototype.handleTouchDown = function() {
 	var self = this;
-
 };
 
 

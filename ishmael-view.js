@@ -3,9 +3,8 @@ var PutStuffHere = PutStuffHere || require('./putstuffhere.js');
 var OrgStuffHereQueue = OrgStuffHereQueue || null;
 var q = require('./queue.js') || OrgStuffHereQueue;
 
-var _uuid = require('./autoincrement.js') || Autoincrementer;
-var uuid = uuid || (_uuid ? _uuid.shared : null);
 
+var Representable = Representable || require('./ishmael.js');
 
 /**
  * View
@@ -13,13 +12,14 @@ var uuid = uuid || (_uuid ? _uuid.shared : null);
  */
 var View = function(templateName, aName, cb) {
 	// var self = this;
+	Representable.call(this);
+
 	this.queue = new q();
 	this.templateConst = "<div>put subviews (unescaped) here</div>";
 	this.templateName = templateName || null;
 	this.template = null;
 	this.subviews = [];
 	this.superview = null;
-	this.uniqueId = null;
 
 	this.classes = [];
 
@@ -29,12 +29,15 @@ var View = function(templateName, aName, cb) {
 
 	// hooks for live updating
 	this.model = '';
-	this.id = -1;
 	this.initialized = false;
 	this.initStarted = false;
 
-	this.uniqueId = uuid().generate();
+	// this.uniqueId = uuid().generate();
 };
+
+View.prototype = Object.create(Representable.prototype);
+View.prototype.constructor = View;
+
 
 /**
  * Init
@@ -56,7 +59,7 @@ View.prototype.init = function(cb) {
 	var initDone = function() {
 		self.initialized = true;
 		self.queue.flush();
-		if (cb) cb(null, self.uniqueId);
+		if (cb) cb(null, self.uniqueId());
 	};
 
 
@@ -102,7 +105,7 @@ View.prototype.removeClass = function(className){
 
 View.prototype.element = function(){
 	var self = this;
-	var elements = document.querySelectorAll("[data-ish=\"" + self.uniqueId + "\"]");
+	var elements = document.querySelectorAll("[data-ish=\"" + self.uniqueId() + "\"]");
 	if (elements.length > 0) {
 		return elements[0];
 	} else {
@@ -162,7 +165,7 @@ View.prototype.bindToAppElement = function(anApp, anElement, cb) {
 		self.renderHTML(function(html){
 			anElement.innerHTML = self._render(true);
 			self.activate();
-			if (cb) cb(null, self.uniqueId);
+			if (cb) cb(null, self.uniqueId());
 		});
 	} else {
 		println("No root element!");	
@@ -193,7 +196,7 @@ View.prototype.updateLocals = function(cb) {
 	var err = null;
 	// No op for now
 	self.locals['name'] = self.name;
-	if (cb) cb(null, self.uniqueId);
+	if (cb) cb(null, self.uniqueId());
 	return self;
 };
 
@@ -236,7 +239,7 @@ View.prototype.update = function(cb) {
 
 		self.initializeSubviews(function() {
 			var err = null;
-			var elements = document.querySelectorAll("[data-ish=\"" + self.uniqueId + "\"]");
+			var elements = document.querySelectorAll("[data-ish=\"" + self.uniqueId() + "\"]");
 
 			if (elements.length > 0) {
 				var anElement = elements[0];
@@ -248,7 +251,7 @@ View.prototype.update = function(cb) {
 
 				dummy = null;
 			} 
-			if (cb) cb(err, self.uniqueId);
+			if (cb) cb(err, self.uniqueId());
 		});
 	});
 
@@ -289,7 +292,7 @@ View.prototype.removeFromSuperview = function() {
 		var myIndex = -1;
 		for (var i = 0; i < self.superview.subviews.length; i++) {
 			var aSubview = self.superview.subviews[i];
-			if (aSubview.uniqueId == self.uniqueId) {
+			if (aSubview.uniqueId == self.uniqueId()) {
 				myIndex = i;
 				break;
 			}
@@ -337,7 +340,7 @@ View.prototype._render = function(isBrowser) {
 
 	if (!self.template) {
 		// Unless you've unset self.template, this should not happen.
-		println("No template for " + self.name + " (" + self.uniqueId + ")");
+		println("No template for " + self.name + " (" + self.uniqueId() + ")");
 		renderedHTML = '<div><!--ERROR--></div>';
 	} else {
 		renderedHTML = self.template(self.locals);
@@ -346,7 +349,7 @@ View.prototype._render = function(isBrowser) {
 	// Add data attribute for our unique id so we can access it via self.element()
 	if (isBrowser) {
 		renderedHTML = renderedHTML
-			.replace(/^([^<]*<[a-z0-9]+)([>\s])/i, "$1 data-ish=\"" + self.uniqueId + "\"$2");
+			.replace(/^([^<]*<[a-z0-9]+)([>\s])/i, "$1 data-ish=\"" + self.uniqueId() + "\"$2");
 	}
 
 	// Add any class names to the root element. It's important not to add style classes via Ishmael—that should be left in the HTML template. The classes are for things like 'selected', which allow CSS to reflect our internal state. If you need more than a class name or two to represent the state, the change in view is probably best represented as a different View subclass.

@@ -3,13 +3,16 @@ var ViewController = ViewController || require('./ishmael-viewcontroller.js');
 var Router = Router || require('./ishmael-router.js');
 var i18n = i18n || require('i18next');
 
+var Representable = Representable || require('./ishmael.js');
+
 /**
  * App object
  * @constructor
  * @param {ViewController} aViewController The root view controller
  */
 var App = function(aViewController) {
-	// TODO
+	Representable.call(this);
+
 	this.router = new Router();
 	// this.dispatcher = new Dispatcher();
 
@@ -19,6 +22,9 @@ var App = function(aViewController) {
 		this.viewControllers.push(aViewController);
 	} 
 };
+App.prototype = Object.create(Representable.prototype);
+App.prototype.constructor = App;
+
 
 /**
  * Init
