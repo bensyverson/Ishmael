@@ -51,7 +51,7 @@ if (typeof sails === typeof(undefined)) {
 }
 
 String.prototype.hasPrefix = function(prefix) {
-    return this.indexOf(prefix) === 0;
+	return this.indexOf(prefix) === 0;
 }
 
 /**
@@ -70,122 +70,109 @@ String.prototype.makeSearchFriendly = function() {
  * @constructor
  */
 var Representable = function() {
-	var _uniqueId = uuid().generate();
+	var _privateClassName = "Representable";
+	var _privateUniqueId = uuid().generate();
 	// representableObjects[_uniqueId] = this;
 	this.uniqueId = function() {
-		return _uniqueId;
+		if (this._uniqueId) {
+			_privateUniqueId = this._uniqueId;
+			delete this._uniqueId;
+		}
+		return _privateUniqueId;
+	};
+	this.identity = function() {
+		if (this._className) {
+			_privateClassName = this._className;
+			delete this._className;
+		}
+		return _privateClassName;
+	};
+
+	this.registerClass = function(aClassName) {
+		_privateClassName = aClassName;
 	};
 };
 
 
-/*
-    cycle.js
-    2013-02-19
-    Public Domain.
-    NO WARRANTY EXPRESSED OR IMPLIED. USE AT YOUR OWN RISK.
-    This code should be minified before deployment.
-    See http://javascript.crockford.com/jsmin.html
-    USE YOUR OWN COPY. IT IS EXTREMELY UNWISE TO LOAD CODE FROM SERVERS YOU DO
-    NOT CONTROL.
-*/
-
-/*jslint evil: true, regexp: true */
-
-/*members $ref, apply, call, decycle, hasOwnProperty, length, prototype, push,
-    retrocycle, stringify, test, toString
-*/
-
 if (typeof JSON.decycle !== 'function') {
-    JSON.decycle = function decycle(object) {
-        'use strict';
+	JSON.decycle = function decycle(object) {
+		'use strict';
 
-// Make a deep copy of an object or array, assuring that there is at most
-// one instance of each object or array in the resulting structure. The
-// duplicate references (which might be forming cycles) are replaced with
-// an object of the form
-//      {$ref: PATH}
-// where the PATH is a JSONPath string that locates the first occurance.
-// So,
-//      var a = [];
-//      a[0] = a;
-//      return JSON.stringify(JSON.decycle(a));
-// produces the string '[{"$ref":"$"}]'.
+		var objects = {};   // Keep a reference to each unique object or array
 
-// JSONPath is used to locate the unique object. $ indicates the top level of
-// the object or array. [NUMBER] or [STRING] indicates a child member or
-// property.
-
-        var objects = {};   // Keep a reference to each unique object or array
-
-        return (function derez(value) {
+		return (function derez(value) {
 
 // The derez recurses through the object, producing the deep copy.
 
-            var i,          // The loop counter
-                name,       // Property name
-                nu;         // The new object or array
+			var i;
+			var name;
+			var nu;
 
 // typeof null === 'object', so go on if this value is really an object but not
 // one of the weird builtin objects.
 
-            if (typeof value === 'object' && value !== null &&
-                    !(value instanceof Boolean) &&
-                    !(value instanceof Date)    &&
-                    !(value instanceof Number)  &&
-                    !(value instanceof RegExp)  &&
-                    !(value instanceof String)) {
+			var obj = new Object();
+			if ((typeof(value) === typeof( obj ))	&& 
+					(value !== null)			&&
+					!(value instanceof Boolean) &&
+					!(value instanceof Date)	&&
+					!(value instanceof Number)  &&
+					!(value instanceof RegExp)  &&
+					!(value instanceof String)) {
 
 // If the value is an object or array, look to see if we have already
 // encountered it. If so, return a $ref/path object. This is a hard way,
 // linear search that will get slower as the number of unique objects grows.
 
 // Ishmael: All of our cyclical structures descend from Representable, so
-// we should be able to call uniqueId to aid in reconstructing the object
-// graph.
+// we should be able to call uniqueId() and identity() to 
+// reinstantiate the object.
 
-				if (typeof(value.uniqueId) === typeof (function() {} )) {
-					var id = value.uniqueId();
-					if (typeof (objects[id]) !== typeof (undefined)) {
-						return { '$_id': id };
+				nu = {};
+				if ((typeof(value['uniqueId']) === 'function') &&
+					(typeof(value['identity']) === 'function')) {
+					var id = value['uniqueId']();
+					// println("UniqueID: " + id);
+					var className = value['identity']();
+					if (typeof (objects[id + '']) !== typeof (undefined)) {
+// If we've seen the object before, return a reference.
+						return { '$_ish': id };
 					} else {
 // If we haven't seen this object, keep going.
-						value._uniqueId = id;
-						objects[id] = value;
+						nu['_uniqueId'] = id;
+						nu['_className'] = className;
+						objects[id + ''] = value;
 					}
 				}
-// If it is an array, replicate the array.
 
-                if (Object.prototype.toString.apply(value) === '[object Array]') {
-                    nu = [];
-                    for (i = 0; i < value.length; i += 1) {
-                        nu[i] = derez(value[i]);
-                    }
-                } else {
-
-// If it is an object, replicate the object.
-
-                    nu = {};
-                    for (name in value) {
-                        if (Object.prototype.hasOwnProperty.call(value, name)) {
-                            nu[name] = derez(value[name]);
-                        }
-                    }
-                }
-                return nu;
-            }
-            return value;
-        }(object));
-    };
+				if (Object.prototype.toString.apply(value) === '[object Array]') {
+					// If it is an array, replicate the array.
+					nu = [];
+					for (i = 0; i < value.length; i += 1) {
+						nu[i] = derez(value[i]);
+					}
+				} else {
+					for (name in value) {
+						if (value.hasOwnProperty(name)) {
+							nu[name] = derez(value[name]);
+						}
+					}
+				}
+				return nu;
+			}
+			return value;
+		}(object));
+	};
 }
 
 
 if (typeof JSON.retrocycle !== 'function') {
-    JSON.retrocycle = function retrocycle($) {
-        'use strict';
+	JSON.retrocycle = function retrocycle($) {
+		'use strict';
 
 // Restore an object that was reduced by decycle. Members whose values are
 // objects of the form
-//      {$ref: PATH}
+//	  {$ref: PATH}
 // are replaced with references to the value found by the PATH. This will
 // restore cycles. The object will be mutated.
 
@@ -198,65 +185,88 @@ if (typeof JSON.retrocycle !== 'function') {
 // Goessner's JSONPath.
 
 // So,
-//      var s = '[{"$ref":"$"}]';
-//      return JSON.retrocycle(JSON.parse(s));
+//	  var s = '[{"$ref":"$"}]';
+//	  return JSON.retrocycle(JSON.parse(s));
 // produces an array containing a single element which is the array itself.
 
 
-        var objects = {};   // Keep a reference to each unique object or array
+		var objects = {};   // Keep a reference to each unique object or array
 
-        (function rez(value) {
 
-// The rez function walks recursively through the object looking for $ref
-// properties. When it finds one that has a value that is a path, then it
-// replaces the $ref object with a reference to the value that is found by
-// the path.
+		// Given an item, attempt to revive it from its class.
+		var instantiateItem = function(item){
+			if (!item) return null;
+			var ownUniqueId = item['_uniqueId'];
+			var ownClass = item['_className'];
+			if ((typeof(ownUniqueId) === typeof(2) ) &&
+				(typeof(ownClass) === typeof('string') )) {
 
-            var i, item, name, path;
+				if (typeof(objects[ownUniqueId + '']) === typeof(undefined)) {
+					if ((typeof(window[ownClass]) !== typeof(undefined)) &&
+						(typeof(ownClass) !== typeof(undefined))) {
+						var newObj = new window[ownClass]();
+						for (var key in item) {
+							if (item.hasOwnProperty(key)) {
+								newObj[key] = item[key];
+							}
+						}
+						objects[ownUniqueId + ''] = newObj;
+						return newObj;
+					}
+				}
+			}
+			return item;
+		};
 
-            if (value && typeof value === 'object') {
-                if (Object.prototype.toString.apply(value) === '[object Array]') {
-                    for (i = 0; i < value.length; i += 1) {
-                        item = value[i];
-                        if (item && typeof item === 'object') {
-                            var uniqueId = item['$_id'];
-                            var ownUniqueId = item['_uniqueId'];
-                            if (typeof(ownUniqueId) === typeof(2) ) {
-                            	objects[ownUniqueId + ''] = item;
-                            }
-                            if ( (typeof(uniqueId) === typeof (2)) &&
-                            	(typeof(objects[uniqueId + '']) !== typeof(undefined) ) ) {
-                                value[i] = objects[uniqueId + ''];
-                            } else {
-                                rez(item);
-                            }
-                        }
-                    }
-                } else {
-                    for (name in value) {
-                        if (typeof value[name] === 'object') {
-                            item = value[name];
-                            if (item) {
-                                var uniqueId = item['$_id'];
-                                var ownUniqueId = item['_uniqueId'];
-	                            if (typeof(ownUniqueId) === typeof(2) ) {
-	                            	objects[ownUniqueId + ''] = item;
-	                            }
+		// Dereference this item if possible
+		var derefItem = function(item){
+			var uniqueId = item['$_ish'];
+			if ((typeof(uniqueId) === typeof (2)) &&
+				(typeof(objects[uniqueId + '']) !== typeof(undefined))) {
+				return objects[uniqueId + ''];
+			}
+			return null;
+		};
 
-	                            if ((typeof(uniqueId) === typeof (2)) &&
-	                            	(typeof(objects[uniqueId + '']) !== typeof(undefined))) {
-	                                value[name] = objects[uniqueId + ''];
-                                } else {
-                                    rez(item);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }($));
-        return $;
-    };
+
+		var cleaned = instantiateItem($);
+		(function identifyItems(value) {
+			var i, item, name;
+			if (value && typeof value === 'object') {
+				if (Object.prototype.toString.apply(value) === '[object Array]') {
+					for (i = 0; i < value.length; i += 1) {
+						item = value[i];
+						if (item && typeof item === 'object') {
+							value[i] = instantiateItem(value[i]);
+							item = value[i];
+							var obj = derefItem(item);
+							if (obj !== null) {
+								value[i] = obj;
+							} else {
+								identifyItems(item);
+							}
+						}
+					}
+				} else {
+					for (name in value) {
+						if (typeof value[name] === 'object') {
+							value[name] = instantiateItem(value[name]);
+							item = value[name];
+							if (item) {
+								var obj = derefItem(item);
+								if (obj !== null) {
+									value[name] = obj;
+								} else {
+									identifyItems(item);
+								}	
+							}
+						}
+					}
+				}
+			}
+		}(cleaned));
+		return cleaned;
+	};
 }
 
 

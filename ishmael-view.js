@@ -14,7 +14,6 @@ var View = function(templateName, aName, cb) {
 	// var self = this;
 	Representable.call(this);
 
-	this.queue = new q();
 	this.templateConst = "<div>put subviews (unescaped) here</div>";
 	this.templateName = templateName || null;
 	this.template = null;
@@ -32,6 +31,7 @@ var View = function(templateName, aName, cb) {
 	this.initialized = false;
 	this.initStarted = false;
 
+	this.registerClass('View');
 	// this.uniqueId = uuid().generate();
 };
 
@@ -39,12 +39,27 @@ View.prototype = Object.create(Representable.prototype);
 View.prototype.constructor = View;
 
 
+View.prototype.checkTemplate = function() {
+	var self = this;
+
+	if (!self.template) {
+		self.initialized = false;	
+	}
+
+	if (!(self.queue instanceof q)) {
+		self.initStarted = false;
+		self.queue = new q();
+	}
+};
+
 /**
  * Init
  * @param {Function} cb A function to call when all subviews have init()'d
  */
 View.prototype.init = function(cb) {
 	var self = this;
+
+	self.checkTemplate();
 
 	if (self.initStarted && (!self.initialized)) {
 		self.enqueue(cb);
@@ -63,7 +78,7 @@ View.prototype.init = function(cb) {
 	};
 
 
-	var doInit = function() {
+	// var doInit = function() {
 		if (self.templateName) {
 			PutStuffHere.shared().getTemplateFunction(self.templateName, function(err, func){
 				self.template = func;
@@ -73,7 +88,7 @@ View.prototype.init = function(cb) {
 			self.template = PutStuffHere.shared().compileText(self.templateConst);
 			self.initializeSubviews(initDone);
 		}
-	}();
+	//}();
 	return self;
 };
 
@@ -137,6 +152,8 @@ View.prototype.initializeSubviews = function(cb){
 View.prototype.enqueue = function(aFunction){
 	var self = this;
 
+	self.checkTemplate();
+
 	if ((!self.initStarted) && (!self.initialized)) {
 		self.init();
 	}
@@ -162,8 +179,11 @@ View.prototype.bindToAppElement = function(anApp, anElement, cb) {
 	var self = this;
 
 	if (anElement) {
+		println("Attempting to render into: ");
+		println(anElement);
 		self.renderHTML(function(html){
-			anElement.innerHTML = self._render(true);
+			println("4. Render: " + html);
+			anElement.innerHTML = html;
 			self.activate();
 			if (cb) cb(null, self.uniqueId());
 		});
@@ -341,16 +361,17 @@ View.prototype._render = function(isBrowser) {
 	if (!self.template) {
 		// Unless you've unset self.template, this should not happen.
 		println("No template for " + self.name + " (" + self.uniqueId() + ")");
+		println(self);
 		renderedHTML = '<div><!--ERROR--></div>';
 	} else {
 		renderedHTML = self.template(self.locals);
 	}
 
 	// Add data attribute for our unique id so we can access it via self.element()
-	if (isBrowser) {
+	//if (isBrowser) {
 		renderedHTML = renderedHTML
 			.replace(/^([^<]*<[a-z0-9]+)([>\s])/i, "$1 data-ish=\"" + self.uniqueId() + "\"$2");
-	}
+	//}
 
 	// Add any class names to the root element. It's important not to add style classes via Ishmael—that should be left in the HTML template. The classes are for things like 'selected', which allow CSS to reflect our internal state. If you need more than a class name or two to represent the state, the change in view is probably best represented as a different View subclass.
 	if (self.classes.length > 0) {
@@ -364,7 +385,7 @@ View.prototype._render = function(isBrowser) {
 		}
 	}
 
-
+	delete self.locals['subviews'];
 
 	return renderedHTML;
 };
@@ -375,6 +396,8 @@ View.prototype._render = function(isBrowser) {
  */
 View.prototype.renderHTML = function(cb) {
 	var self = this;
+
+	println("Render HTML Called.");
 
 	self.enqueue(function() {
 		// Layout if needed. This lets a subclass change its layout (add/remove subviews) based on the locals.

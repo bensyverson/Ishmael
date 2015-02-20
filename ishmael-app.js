@@ -21,6 +21,7 @@ var App = function(aViewController) {
 	if (aViewController) {
 		this.viewControllers.push(aViewController);
 	} 
+	this.registerClass('App');
 };
 App.prototype = Object.create(Representable.prototype);
 App.prototype.constructor = App;
@@ -40,7 +41,7 @@ App.prototype.init = function() {
 /**
  * Bootstrap, a method called by the browser to get ourselves going.
  */
-App.prototype.bootstrap = function(anId) {
+App.prototype.bootstrap = function(anId, cb) {
 	var self = this;
 
 	//self.init();
@@ -49,8 +50,8 @@ App.prototype.bootstrap = function(anId) {
 	i18n.init(option, function() {
 		self.rootViewController().loadView();
 		self.rootViewController().viewWillAppear();
-
-		self.rootViewController().view.bindToAppElement(self, document.getElementById(anId));
+		
+		self.rootViewController().view.bindToAppElement(self, document.getElementById(anId), cb);
 	});
 
 };

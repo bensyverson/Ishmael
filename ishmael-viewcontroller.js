@@ -14,6 +14,7 @@ var ViewController = function(aRoute, aView) {
 	this.route = aRoute;
 	this._childViewControllers =[];
 	this.parentViewController = null;
+	this.registerClass('ViewController');
 };
 ViewController.prototype = Object.create(Representable.prototype);
 ViewController.prototype.constructor = ViewController;
