@@ -1,3 +1,5 @@
+"use strict";
+var Representable = Representable || require('./ishmael.js');
 
 var View = View || require('./ishmael-view.js');
 var IDEvent = IDEvent || require('./ishmael-idevent.js');
@@ -12,9 +14,13 @@ var nil = null;
 var Control = function(templateName, aName, cb) {
 	var self = this;
 	View.call(this, templateName, aName, cb);
-	if (self) {
-		self.eventTargets = {};
-	}
+	
+	var _eventTargets = {};
+
+	this.eventTargets = function() {
+		return _eventTargets;
+	};
+	this.registerClass('Control');
 };
 
 Control.prototype = Object.create(View.prototype);
@@ -53,10 +59,10 @@ Control.prototype.addTargetActionForControlEvents = function(aTargetAction, aCon
 {
 	var self = this;
 
-	var aTargetArray = self.eventTargets[aControlEvent];
+	var aTargetArray = self.eventTargets()[aControlEvent];
 	if (!aTargetArray) {
-		self.eventTargets[aControlEvent] = new Array();
-		aTargetArray = self.eventTargets[aControlEvent];
+		self.eventTargets()[aControlEvent] = new Array();
+		aTargetArray = self.eventTargets()[aControlEvent];
 	}
 
 	for (var i = 0; i < aTargetArray.length; i++) {
@@ -65,7 +71,7 @@ Control.prototype.addTargetActionForControlEvents = function(aTargetAction, aCon
 		}
 	}
 
-	self.eventTargets[aControlEvent].push(aTargetAction); // Finally add the target-action.
+	self.eventTargets()[aControlEvent].push(aTargetAction); // Finally add the target-action.
 };
 
 /** 
@@ -88,12 +94,12 @@ Control.prototype.sendActionsForControlEvents = function(controlEvents)
 	var self = this;
 	var controlEventMask = controlEvents | 0;
 	
-	for (var key in self.eventTargets) {
-		if (self.eventTargets.hasOwnProperty(key)) {
+	for (var key in self.eventTargets()) {
+		if (self.eventTargets().hasOwnProperty(key)) {
 			if ((controlEventMask & parseInt(key)) != 0) {
-				for (var i = 0; i < self.eventTargets[key].length; i++) {
+				for (var i = 0; i < self.eventTargets()[key].length; i++) {
 					var anEvent = new IDEvent(IDEventNameGeneric, controlEventMask);
-					self.eventTargets[key][i](self, anEvent); // Actually run the control
+					self.eventTargets()[key][i](self, anEvent); // Actually run the control
 				}
 			}
 		}

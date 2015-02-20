@@ -1,3 +1,5 @@
+"use strict";
+var Representable = Representable || require('./ishmael.js');
 var Control = Control || require('./ishmael-control.js');
 
 var UIButton = function(templateName, aName, cb) {
@@ -7,6 +9,7 @@ var UIButton = function(templateName, aName, cb) {
 	if (self) {
 		self.touchBegan = false;
 	}
+	this.registerClass('UIButton');
 };
 
 UIButton.prototype = Object.create(Control.prototype);

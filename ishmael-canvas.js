@@ -1,6 +1,8 @@
-
+"use strict";
+var Representable = Representable || require('./ishmael.js');
 
 var RetinaCanvas = function(aWidth, aHeight) {
+	Representable.call(this);
 	this.canvas = document.createElement('canvas');
 	document.body.appendChild(this.canvas);
 	// var G_vmlCanvasManager = G_vmlCanvasManager || 0;
@@ -33,6 +35,7 @@ var RetinaCanvas = function(aWidth, aHeight) {
 	context.scale( this.scaleFactor,this.scaleFactor);
 
 	document.body.removeChild(this.canvas);
+	this.registerClass('RetinaCanvas');
 };
 
 

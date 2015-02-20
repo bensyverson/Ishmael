@@ -1,7 +1,12 @@
+"use strict";
+var Representable = Representable || require('./ishmael.js');
+
 var UIColor = UIColor || require('./ishmael-uicolor.js');
 
 var Gradient = function() {
+	Representable.call(this);
 	this.colors = [];
+	this.registerClass('Gradient');
 };
 
 Gradient.prototype.push = function(aColor) {

@@ -1,3 +1,5 @@
+"use strict";
+var Representable = Representable || require('./ishmael.js');
 
 
 /**
@@ -5,6 +7,7 @@
  * @constructor
  */
 var Endpoint = function(name) {
+	Representable.call(this);
 	this.name = name || 'untitled';
 
 	var observers = {};
@@ -25,6 +28,8 @@ var Endpoint = function(name) {
 		var self = this;
 		if (elementId in observers) delete observers[elementId];
 	};
+
+	this.registerClass('Endpoint');
 };
 
 

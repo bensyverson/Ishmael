@@ -1,3 +1,5 @@
+"use strict";
+var Representable = Representable || require('./ishmael.js');
 
 /**
  * KeySpline - use bezier curve for transition easing function
@@ -75,6 +77,7 @@ var GRKeySpline = function(mX1, mY1, mX2, mY2) {
  */
 
 var IDCachedInterpolation = function(mX1, mY1, mX2, mY2) {
+  Representable.call(this);
 	var self = this;
 
 	self.values = new Array();
@@ -86,6 +89,7 @@ var IDCachedInterpolation = function(mX1, mY1, mX2, mY2) {
 	self.get = function(zeroToOne) {
 		return self.values[parseInt(zeroToOne * 1023.0)] || 0;
 	};
+  this.registerClass('IDCachedInterpolation');
 };
 
 module.exports = IDCachedInterpolation;

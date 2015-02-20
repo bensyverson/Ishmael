@@ -1,3 +1,4 @@
+"use strict";
 var View = View || require('./ishmael-view.js');
 
 var Representable = Representable || require('./ishmael.js');

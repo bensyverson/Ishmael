@@ -1,3 +1,5 @@
+"use strict";
+var Representable = Representable || require('./ishmael.js');
 
 /**
  * UIColor
@@ -9,11 +11,13 @@
  */
 var UIColor = function(red, green, blue, alpha)
 {
+	Representable.call(this);
 	var self = this;
 	self.red =		red ? red : 0;
 	self.green =	green ? green : 0;
 	self.blue =		blue ? blue : 0;
 	self.alpha =	alpha ? alpha : 0;
+	this.registerClass('UIColor');
 };
 
 UIColor.prototype.hexString = function() {

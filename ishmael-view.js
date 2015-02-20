@@ -1,3 +1,5 @@
+"use strict";
+
 var PutStuffHere = PutStuffHere || require('./putstuffhere.js');
 
 var OrgStuffHereQueue = OrgStuffHereQueue || null;
@@ -179,10 +181,10 @@ View.prototype.bindToAppElement = function(anApp, anElement, cb) {
 	var self = this;
 
 	if (anElement) {
-		println("Attempting to render into: ");
+		// println("Attempting to render into: ");
 		println(anElement);
 		self.renderHTML(function(html){
-			println("4. Render: " + html);
+			// println("4. Render: " + html);
 			anElement.innerHTML = html;
 			self.activate();
 			if (cb) cb(null, self.uniqueId());
@@ -200,6 +202,7 @@ View.prototype.bindToAppElement = function(anApp, anElement, cb) {
 View.prototype.activate = function() {
 	var self = this;
 	
+	// println("Activating " + self.name);
 	// Activate myself
 	for (var i = 0; i < self.subviews.length; i++) {
 		self.subviews[i].activate();
