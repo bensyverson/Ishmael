@@ -2,9 +2,7 @@
 
 var PutStuffHere = PutStuffHere || require('./putstuffhere.js');
 
-var OrgStuffHereQueue = OrgStuffHereQueue || null;
-var q = require('./queue.js') || OrgStuffHereQueue;
-
+var OrgStuffHereQueue = OrgStuffHereQueue || require('./queue.js');
 
 var Representable = Representable || require('./ishmael.js');
 
@@ -34,6 +32,7 @@ var View = function(templateName, aName, cb) {
 	this.initStarted = false;
 
 	this.registerClass('View');
+
 	// this.uniqueId = uuid().generate();
 };
 
@@ -44,13 +43,13 @@ View.prototype.constructor = View;
 View.prototype.checkTemplate = function() {
 	var self = this;
 
-	if (!self.template) {
+	if (typeof(self.template) === typeof(undefined)) {
 		self.initialized = false;	
 	}
 
-	if (!(self.queue instanceof q)) {
+	if ((!self.queue) || !(self.queue.hasOwnProperty('add'))) {
 		self.initStarted = false;
-		self.queue = new q();
+		self.queue = new OrgStuffHereQueue();
 	}
 };
 
@@ -63,6 +62,7 @@ View.prototype.init = function(cb) {
 
 	self.checkTemplate();
 
+	// If we already started the init, but haven't finished, queue the cb
 	if (self.initStarted && (!self.initialized)) {
 		self.enqueue(cb);
 		return;
@@ -181,7 +181,7 @@ View.prototype.bindToAppElement = function(anApp, anElement, cb) {
 	var self = this;
 
 	if (anElement) {
-		self.renderHTML(function(html){
+		self.renderHTML(function(err, html){
 			anElement.innerHTML = html;
 			self.activate();
 			if (cb) cb(null, self.uniqueId());
@@ -199,7 +199,6 @@ View.prototype.bindToAppElement = function(anApp, anElement, cb) {
 View.prototype.activate = function() {
 	var self = this;
 	
-	// println("Activating " + self.name);
 	// Activate myself
 	for (var i = 0; i < self.subviews.length; i++) {
 		self.subviews[i].activate();
@@ -224,15 +223,14 @@ View.prototype.updateLocals = function(cb) {
  * Layout subviews
  * @param {Function} cb A callback
  */
-View.prototype.layoutSubviews = function() {
+View.prototype.layoutSubviews = function(options) {
 	var self = this;
 
 	// First update our locals. This gives subclasses a chance to set locals based on a custom object, data source, time of day, etc.
 	self.updateLocals();
 
-	// Activate myself
 	for (var i = 0; i < self.subviews.length; i++) {
-		self.subviews[i].layoutSubviews();
+		self.subviews[i].layoutSubviews(options);
 	}
 
 	return self;
@@ -305,7 +303,7 @@ View.prototype.insertSubviewAtIndex = function(aView, anIndex) {
  * Remove from superview
  * @param {View} aView The View to add
  */
-View.prototype.removeFromSuperview = function() {
+View.prototype.removeFromSuperview = function(options) {
 	var self = this;
 
 	if (self.superview) {
@@ -323,9 +321,11 @@ View.prototype.removeFromSuperview = function() {
 		}
 	}
 
-	var element = self.element();
-	if (element && element.parentNode) {
-		element.parentNode.removeChild(element);
+	if (options && options.keepElements) {
+		var element = self.element();
+		if (element && element.parentNode) {
+			element.parentNode.removeChild(element);
+		}
 	}
 };
 
@@ -338,7 +338,6 @@ View.prototype.removeAllSubviews = function() {
 	while (self.subviews.length > 0) {
 		self.subviews.pop().removeFromSuperview();
 	}
-	
 	return self;
 };
 
@@ -397,12 +396,17 @@ View.prototype.renderHTML = function(cb) {
 
 	self.enqueue(function() {
 		// Layout if needed. This lets a subclass change its layout (add/remove subviews) based on the locals.
-		self.layoutSubviews();
+		self.layoutSubviews({keepElements: true});
+		// self.layoutSubviews();
+		// self.layoutSubviews();
+		// self.layoutSubviews();
+		// self.layoutSubviews();
 
 		self.initializeSubviews(function() {
-			if (typeof(cb) === typeof(function(){})) cb(self._render());	
+			if (typeof(cb) === typeof(function(){})) cb(null, self._render());	
 		});
 	});
+
 
 	return self;
 };

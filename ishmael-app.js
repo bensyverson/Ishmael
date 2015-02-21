@@ -56,13 +56,36 @@ App.prototype.bootstrap = function(anId, cb) {
 	});
 };
 
+/**
+ * Get this app ready for deployment as HTML + <script> tag
+ */
+App.prototype.packAndShip = function(cb) {
+	var self = this;
 
-
-
+	self.rootViewController().view.renderHTML(function(err, html){
+		var myErr = null;
+		var myHTML = null;
+		if (err) {
+			myErr = myErr
+		} else {
+			myHTML = html 
+					+ '<script type="text/javascript">(function(){'
+					+ 'var j=\''
+					+ self.freeze()
+						.replace(/'/g, "\\\'")
+						.replace(/\\n/g, "\\\\n")
+					+ '\';var a=Representable.thaw(j);'
+					+ 'a.mouthToMouth(function(err,appId){console.log("Launched " + appId);});'
+					+ '}());</script>';
+		}
+		if (typeof(cb) === typeof(function(){})) cb(myErr, myHTML);
+	});
+};
 
 /**
- * Thaw assumes that the DOM tree already exists.
- * In order to enable revive, dehydrate the App via dehydrate();
+ * Mouth to Mouth assumes that the DOM tree already exists.
+ * In order to generate the DOM on the server, run the freeze()
+ * method on the app.
  */
 App.prototype.mouthToMouth = function(cb) {
 	var self = this;
@@ -74,6 +97,7 @@ App.prototype.mouthToMouth = function(cb) {
 		var view = self.rootViewController().view;
 		view.init(function(err, uniqueId){
 			view.activate();
+			if (typeof(cb) === typeof(function(){})) cb(err, uniqueId);
 		});
 	});
 };

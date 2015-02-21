@@ -21,13 +21,13 @@ ViewController.prototype = Object.create(Representable.prototype);
 ViewController.prototype.constructor = ViewController;
 
 
-/**
- * Render the View Controller
- */
-ViewController.prototype.render = function() {
-	var self = this;
-	return self.view.render();
-};
+// /**
+//  * Render the View Controller
+//  */
+// ViewController.prototype.render = function() {
+// 	var self = this;
+// 	return self.view.render();
+// };
 
 
 /**

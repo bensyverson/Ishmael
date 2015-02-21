@@ -94,9 +94,6 @@ var Representable = function() {
 };
 
 
-
-
-
 Representable.prototype.freeze = function() {
 	var self = this;
 
@@ -170,6 +167,8 @@ Representable.prototype.freeze = function() {
 	return JSON.stringify(decycle(self));
 };
 
+
+
 Representable.thaw = function(aJSONString) {
 	// var self = this;
 
@@ -196,7 +195,6 @@ Representable.thaw = function(aJSONString) {
 
 		var objects = {};   // Keep a reference to each unique object or array
 
-
 		// Given an item, attempt to revive it from its class.
 		var instantiateItem = function(item){
 			if (!item) return null;
@@ -205,21 +203,20 @@ Representable.thaw = function(aJSONString) {
 			if ((typeof(ownUniqueId) === typeof(2) ) &&
 				(typeof(ownClass) === typeof('string') )) {
 
-				if (typeof(objects[ownUniqueId + '']) === typeof(undefined)) {
-					if ((typeof(window[ownClass]) !== typeof(undefined)) &&
-						(typeof(ownClass) !== typeof(undefined))) {
-						var newObj = new window[ownClass]();
-						for (var key in item) {
-							if (item.hasOwnProperty(key)) {
-								// Don't attempt to replace instance methods.
-								if (typeof(item[key]) !== typeof(function(){})) {
-									newObj[key] = item[key];
-								}
+				if ((typeof(objects[ownUniqueId + '']) === typeof(undefined))	&&
+					(typeof(window[ownClass]) !== typeof(undefined)) 			&&
+					(typeof(ownClass) !== typeof(undefined))) {
+					var newObj = new window[ownClass]();
+					for (var key in item) {
+						if (item.hasOwnProperty(key)) {
+							// Don't attempt to replace instance methods.
+							if (typeof(item[key]) !== typeof(function(){})) {
+								newObj[key] = item[key];
 							}
 						}
-						objects[ownUniqueId + ''] = newObj;
-						return newObj;
 					}
+					objects[ownUniqueId + ''] = newObj;
+					return newObj;
 				}
 			}
 			return item;
@@ -271,11 +268,13 @@ Representable.thaw = function(aJSONString) {
 				}
 			}
 		}(cleaned));
+		objects = {};
 		return cleaned;
 	};
 
 	return retrocycle(JSON.parse(aJSONString));
 };
+
 
 
 // Ishmael();
