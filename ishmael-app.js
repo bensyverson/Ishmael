@@ -3,6 +3,7 @@ var ViewController = ViewController || require('./ishmael-viewcontroller.js');
 var Router = Router || require('./ishmael-router.js');
 var i18n = i18n || require('i18next');
 var Representable = Representable || require('./ishmael.js');
+var PutStuffHere = PutStuffHere || require('./putstuffhere.js');
 
 /**
  * App object
@@ -11,6 +12,8 @@ var Representable = Representable || require('./ishmael.js');
  */
 var App = function(aViewController) {
 	Representable.call(this);
+
+	PutStuffHere.shared().setDefaultHTML("<div>put subviews (unescaped) here</div>");
 
 	this.rootId = null;
 	this.router = new Router();
@@ -51,9 +54,12 @@ App.prototype.bootstrap = function(anId, cb) {
 	i18n.init(option, function() {
 		self.rootViewController().loadView();
 		self.rootViewController().viewDidLoad();
-		self.rootViewController().viewWillAppear();
+
 		
-		self.rootViewController().view.bindToAppElement(self, document.getElementById(anId), cb);
+		self.rootViewController().view.bindToAppElement(self, document.getElementById(anId), function(err, id) {
+			self.rootViewController().viewWillAppear();
+			if (typeof(cb) === typeof(function(){})) cb(err, id);
+		});
 	});
 };
 

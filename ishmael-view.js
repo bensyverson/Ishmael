@@ -14,7 +14,7 @@ var View = function(templateName, aName, cb) {
 	// var self = this;
 	Representable.call(this);
 
-	this.templateConst = "<div>put subviews (unescaped) here</div>";
+	this.templateConst = null;
 	this.templateName = templateName || null;
 	this.template = null;
 	this.subviews = [];
@@ -85,6 +85,7 @@ View.prototype.init = function(cb) {
 			self.initializeSubviews(initDone);
 		});
 	} else {
+		println("Compiling " + self.templateConst);
 		self.template = PutStuffHere.shared().compileText(self.templateConst);
 		self.initializeSubviews(initDone);
 	}
