@@ -181,10 +181,7 @@ View.prototype.bindToAppElement = function(anApp, anElement, cb) {
 	var self = this;
 
 	if (anElement) {
-		// println("Attempting to render into: ");
-		println(anElement);
 		self.renderHTML(function(html){
-			// println("4. Render: " + html);
 			anElement.innerHTML = html;
 			self.activate();
 			if (cb) cb(null, self.uniqueId());
@@ -370,11 +367,9 @@ View.prototype._render = function(isBrowser) {
 		renderedHTML = self.template(self.locals);
 	}
 
-	// Add data attribute for our unique id so we can access it via self.element()
-	//if (isBrowser) {
-		renderedHTML = renderedHTML
-			.replace(/^([^<]*<[a-z0-9]+)([>\s])/i, "$1 data-ish=\"" + self.uniqueId() + "\"$2");
-	//}
+
+	renderedHTML = renderedHTML
+		.replace(/^([^<]*<[a-z0-9]+)([>\s])/i, "$1 data-ish=\"" + self.uniqueId() + "\"$2");
 
 	// Add any class names to the root element. It's important not to add style classes via Ishmael—that should be left in the HTML template. The classes are for things like 'selected', which allow CSS to reflect our internal state. If you need more than a class name or two to represent the state, the change in view is probably best represented as a different View subclass.
 	if (self.classes.length > 0) {
@@ -399,8 +394,6 @@ View.prototype._render = function(isBrowser) {
  */
 View.prototype.renderHTML = function(cb) {
 	var self = this;
-
-	println("Render HTML Called.");
 
 	self.enqueue(function() {
 		// Layout if needed. This lets a subclass change its layout (add/remove subviews) based on the locals.

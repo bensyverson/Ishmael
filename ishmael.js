@@ -94,22 +94,25 @@ var Representable = function() {
 };
 
 
-if (typeof JSON.decycle !== 'function') {
-	JSON.decycle = function decycle(object) {
-		'use strict';
 
+
+
+Representable.prototype.freeze = function() {
+	var self = this;
+
+	var decycle = function(object) {
 		var objects = {};   // Keep a reference to each unique object or array
 
 		return (function derez(value) {
 
-// The derez recurses through the object, producing the deep copy.
+	// The derez recurses through the object, producing the deep copy.
 
 			var i;
 			var name;
 			var nu;
 
-// typeof null === 'object', so go on if this value is really an object but not
-// one of the weird builtin objects.
+	// typeof null === 'object', so go on if this value is really an object but not
+	// one of the weird builtin objects.
 
 			var obj = new Object();
 			if ((typeof(value) === typeof( obj ))	&& 
@@ -120,13 +123,13 @@ if (typeof JSON.decycle !== 'function') {
 					!(value instanceof RegExp)  &&
 					!(value instanceof String)) {
 
-// If the value is an object or array, look to see if we have already
-// encountered it. If so, return a $ref/path object. This is a hard way,
-// linear search that will get slower as the number of unique objects grows.
+	// If the value is an object or array, look to see if we have already
+	// encountered it. If so, return a $ref/path object. This is a hard way,
+	// linear search that will get slower as the number of unique objects grows.
 
-// Ishmael: All of our cyclical structures descend from Representable, so
-// we should be able to call uniqueId() and identity() to 
-// reinstantiate the object.
+	// Ishmael: All of our cyclical structures descend from Representable, so
+	// we should be able to call uniqueId() and identity() to 
+	// reinstantiate the object.
 
 				nu = {};
 				if ((typeof(value['uniqueId']) === 'function') &&
@@ -135,10 +138,10 @@ if (typeof JSON.decycle !== 'function') {
 					// println("UniqueID: " + id);
 					var className = value['identity']();
 					if (typeof (objects[id + '']) !== typeof (undefined)) {
-// If we've seen the object before, return a reference.
+	// If we've seen the object before, return a reference.
 						return { '$_ish': id };
 					} else {
-// If we haven't seen this object, keep going.
+	// If we haven't seen this object, keep going.
 						nu['_uniqueId'] = id;
 						nu['_className'] = className;
 						objects[id + ''] = value;
@@ -163,31 +166,32 @@ if (typeof JSON.decycle !== 'function') {
 			return value;
 		}(object));
 	};
-}
 
+	return JSON.stringify(decycle(self));
+};
 
-if (typeof JSON.retrocycle !== 'function') {
-	JSON.retrocycle = function retrocycle($) {
-		'use strict';
+Representable.thaw = function(aJSONString) {
+	// var self = this;
 
-// Restore an object that was reduced by decycle. Members whose values are
-// objects of the form
-//	  {$ref: PATH}
-// are replaced with references to the value found by the PATH. This will
-// restore cycles. The object will be mutated.
+	var retrocycle = function($) {
+	// Restore an object that was reduced by decycle. Members whose values are
+	// objects of the form
+	//	  {$ref: PATH}
+	// are replaced with references to the value found by the PATH. This will
+	// restore cycles. The object will be mutated.
 
-// The eval function is used to locate the values described by a PATH. The
-// root object is kept in a $ variable. A regular expression is used to
-// assure that the PATH is extremely well formed. The regexp contains nested
-// * quantifiers. That has been known to have extremely bad performance
-// problems on some browsers for very long strings. A PATH is expected to be
-// reasonably short. A PATH is allowed to belong to a very restricted subset of
-// Goessner's JSONPath.
+	// The eval function is used to locate the values described by a PATH. The
+	// root object is kept in a $ variable. A regular expression is used to
+	// assure that the PATH is extremely well formed. The regexp contains nested
+	// * quantifiers. That has been known to have extremely bad performance
+	// problems on some browsers for very long strings. A PATH is expected to be
+	// reasonably short. A PATH is allowed to belong to a very restricted subset of
+	// Goessner's JSONPath.
 
-// So,
-//	  var s = '[{"$ref":"$"}]';
-//	  return JSON.retrocycle(JSON.parse(s));
-// produces an array containing a single element which is the array itself.
+	// So,
+	//	  var s = '[{"$ref":"$"}]';
+	//	  return JSON.retrocycle(JSON.parse(s));
+	// produces an array containing a single element which is the array itself.
 
 
 		var objects = {};   // Keep a reference to each unique object or array
@@ -207,7 +211,10 @@ if (typeof JSON.retrocycle !== 'function') {
 						var newObj = new window[ownClass]();
 						for (var key in item) {
 							if (item.hasOwnProperty(key)) {
-								newObj[key] = item[key];
+								// Don't attempt to replace instance methods.
+								if (typeof(item[key]) !== typeof(function(){})) {
+									newObj[key] = item[key];
+								}
 							}
 						}
 						objects[ownUniqueId + ''] = newObj;
@@ -227,7 +234,6 @@ if (typeof JSON.retrocycle !== 'function') {
 			}
 			return null;
 		};
-
 
 		var cleaned = instantiateItem($);
 		(function identifyItems(value) {
@@ -267,7 +273,9 @@ if (typeof JSON.retrocycle !== 'function') {
 		}(cleaned));
 		return cleaned;
 	};
-}
+
+	return retrocycle(JSON.parse(aJSONString));
+};
 
 
 // Ishmael();

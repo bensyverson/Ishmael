@@ -2,7 +2,6 @@ var View = View || require('./ishmael-view.js');
 var ViewController = ViewController || require('./ishmael-viewcontroller.js');
 var Router = Router || require('./ishmael-router.js');
 var i18n = i18n || require('i18next');
-
 var Representable = Representable || require('./ishmael.js');
 
 /**
@@ -13,6 +12,7 @@ var Representable = Representable || require('./ishmael.js');
 var App = function(aViewController) {
 	Representable.call(this);
 
+	this.rootId = null;
 	this.router = new Router();
 	// this.dispatcher = new Dispatcher();
 
@@ -39,12 +39,13 @@ App.prototype.init = function() {
 };
 
 /**
- * Bootstrap, a method called by the browser to get ourselves going.
+ * Bootstrap, a method called by the browser to get ourselves going from zero.
  */
 App.prototype.bootstrap = function(anId, cb) {
 	var self = this;
 
-	//self.init();
+	self.init();
+	self.rootId = anId;
 	var option = { resGetPath: '../locales/__lng__/__ns__.json' };
 
 	i18n.init(option, function() {
@@ -53,7 +54,28 @@ App.prototype.bootstrap = function(anId, cb) {
 		
 		self.rootViewController().view.bindToAppElement(self, document.getElementById(anId), cb);
 	});
+};
 
+
+
+
+
+/**
+ * Thaw assumes that the DOM tree already exists.
+ * In order to enable revive, dehydrate the App via dehydrate();
+ */
+App.prototype.mouthToMouth = function(cb) {
+	var self = this;
+	var option = { resGetPath: '../locales/__lng__/__ns__.json' };
+
+	i18n.init(option, function() {
+		self.rootViewController().loadView();
+		self.rootViewController().viewWillAppear();
+		var view = self.rootViewController().view;
+		view.init(function(err, uniqueId){
+			view.activate();
+		});
+	});
 };
 
 /**
