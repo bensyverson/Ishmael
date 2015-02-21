@@ -50,6 +50,7 @@ App.prototype.bootstrap = function(anId, cb) {
 
 	i18n.init(option, function() {
 		self.rootViewController().loadView();
+		self.rootViewController().viewDidLoad();
 		self.rootViewController().viewWillAppear();
 		
 		self.rootViewController().view.bindToAppElement(self, document.getElementById(anId), cb);
@@ -57,26 +58,26 @@ App.prototype.bootstrap = function(anId, cb) {
 };
 
 /**
- * Get this app ready for deployment as HTML + <script> tag
+ * Bootstrap, a method called by the browser to get ourselves going from zero.
  */
 App.prototype.packAndShip = function(cb) {
 	var self = this;
 
-	self.rootViewController().view.renderHTML(function(err, html){
+	self.rootViewController().view.renderSnapshot(function(err, html){
 		var myErr = null;
 		var myHTML = null;
 		if (err) {
 			myErr = myErr
 		} else {
 			myHTML = html 
-					+ '<script type="text/javascript">(function(){'
+					+ '<script type="text/javascript">(function(){var m=function(e){'
 					+ 'var j=\''
 					+ self.freeze()
 						.replace(/'/g, "\\\'")
 						.replace(/\\n/g, "\\\\n")
 					+ '\';var a=Representable.thaw(j);'
 					+ 'a.mouthToMouth(function(err,appId){console.log("Launched " + appId);});'
-					+ '}());</script>';
+					+ '};document.addEventListener("DOMContentLoaded",m);}())</script>';
 		}
 		if (typeof(cb) === typeof(function(){})) cb(myErr, myHTML);
 	});
@@ -85,14 +86,14 @@ App.prototype.packAndShip = function(cb) {
 /**
  * Mouth to Mouth assumes that the DOM tree already exists.
  * In order to generate the DOM on the server, run the freeze()
- * method on the app.
+ * or packAndShip() method on the app.
  */
 App.prototype.mouthToMouth = function(cb) {
 	var self = this;
 	var option = { resGetPath: '../locales/__lng__/__ns__.json' };
 
 	i18n.init(option, function() {
-		self.rootViewController().loadView();
+		self.rootViewController().viewDidLoad();
 		self.rootViewController().viewWillAppear();
 		var view = self.rootViewController().view;
 		view.init(function(err, uniqueId){

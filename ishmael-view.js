@@ -79,18 +79,15 @@ View.prototype.init = function(cb) {
 		if (cb) cb(null, self.uniqueId());
 	};
 
-
-	// var doInit = function() {
-		if (self.templateName) {
-			PutStuffHere.shared().getTemplateFunction(self.templateName, function(err, func){
-				self.template = func;
-				self.initializeSubviews(initDone);
-			});
-		} else {
-			self.template = PutStuffHere.shared().compileText(self.templateConst);
+	if (self.templateName) {
+		PutStuffHere.shared().getTemplateFunction(self.templateName, function(err, func){
+			self.template = func;
 			self.initializeSubviews(initDone);
-		}
-	//}();
+		});
+	} else {
+		self.template = PutStuffHere.shared().compileText(self.templateConst);
+		self.initializeSubviews(initDone);
+	}
 	return self;
 };
 
@@ -223,14 +220,14 @@ View.prototype.updateLocals = function(cb) {
  * Layout subviews
  * @param {Function} cb A callback
  */
-View.prototype.layoutSubviews = function(options) {
+View.prototype.layoutSubviews = function() {
 	var self = this;
 
 	// First update our locals. This gives subclasses a chance to set locals based on a custom object, data source, time of day, etc.
 	self.updateLocals();
 
 	for (var i = 0; i < self.subviews.length; i++) {
-		self.subviews[i].layoutSubviews(options);
+		self.subviews[i].layoutSubviews();
 	}
 
 	return self;
@@ -303,7 +300,7 @@ View.prototype.insertSubviewAtIndex = function(aView, anIndex) {
  * Remove from superview
  * @param {View} aView The View to add
  */
-View.prototype.removeFromSuperview = function(options) {
+View.prototype.removeFromSuperview = function() {
 	var self = this;
 
 	if (self.superview) {
@@ -321,11 +318,9 @@ View.prototype.removeFromSuperview = function(options) {
 		}
 	}
 
-	if (options && options.keepElements) {
-		var element = self.element();
-		if (element && element.parentNode) {
-			element.parentNode.removeChild(element);
-		}
+	var element = self.element();
+	if (element && element.parentNode) {
+		element.parentNode.removeChild(element);
 	}
 };
 
@@ -397,17 +392,26 @@ View.prototype.renderHTML = function(cb) {
 	self.enqueue(function() {
 		// Layout if needed. This lets a subclass change its layout (add/remove subviews) based on the locals.
 		self.layoutSubviews({keepElements: true});
-		// self.layoutSubviews();
-		// self.layoutSubviews();
-		// self.layoutSubviews();
-		// self.layoutSubviews();
 
 		self.initializeSubviews(function() {
 			if (typeof(cb) === typeof(function(){})) cb(null, self._render());	
 		});
 	});
+	return self;
+};
 
+/**
+ * Render current HTML asynchronously
+ * @param {Function} cb A callback
+ */
+View.prototype.renderSnapshot = function(cb) {
+	var self = this;
 
+	self.enqueue(function() {
+		self.initializeSubviews(function() {
+			if (typeof(cb) === typeof(function(){})) cb(null, self._render());	
+		});
+	});
 	return self;
 };
 

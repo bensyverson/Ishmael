@@ -61,7 +61,7 @@ Control.prototype.addTargetActionForControlEvents = function(aTargetAction, aCon
 
 	var aTargetArray = self.eventTargets()[aControlEvent];
 	if (!aTargetArray) {
-		self.eventTargets()[aControlEvent] = new Array();
+		self.eventTargets()[aControlEvent] = [];
 		aTargetArray = self.eventTargets()[aControlEvent];
 	}
 
@@ -114,6 +114,7 @@ Control.prototype.sendActionsForControlEvents = function(controlEvents)
  */
 Control.prototype.didReceiveTouch = function(anEvent) {
 	var self = this;
+	
 	if (self.touchesBeganWithEvent) {
 		var element = self.element();
 		var handleTouchMove = nil;

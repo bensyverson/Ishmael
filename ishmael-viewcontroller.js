@@ -126,6 +126,13 @@ ViewController.prototype.loadView = function(isAnimated) {
 };
 
 /**
+ * Activate the view hierarchy.
+ */
+ViewController.prototype.viewDidLoad = function(isAnimated) {
+	var self = this;
+};
+
+/**
  * Alert that the view will appear.
  */
 ViewController.prototype.viewWillAppear = function(isAnimated) {

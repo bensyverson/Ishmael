@@ -23,9 +23,8 @@ UIButton.prototype.activate = function() {
 	
 	// Activate myself
 	var element = self.element();
-
-	element.addEventListener('touchstart', function(e){ return self.didReceiveTouch(e);}, false);
-	element.addEventListener('mousedown', function(e){ return self.didReceiveTouch(e);}, false);
+	element.addEventListener('touchstart', function(e){ return self.didReceiveTouch(e);}, true);
+	element.addEventListener('mousedown', function(e){  return self.didReceiveTouch(e);}, true);
 
 	View.prototype.activate.call(this);
 };
@@ -42,6 +41,7 @@ UIButton.prototype.touchesBeganWithEvent = function(anEvent)
 {
 	var self = this;
 	self.sendActionsForControlEvents(Control.EventTouchDown);
+
 	self.touchBegan = true;
 };
 
