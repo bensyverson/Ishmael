@@ -2,21 +2,21 @@
 var println = println || function(x){console.log(x);}
 var View = View || require('./ishmael-view.js');
 
-var htmlparser = require("htmlparser2");
-var DomUtils = require("domutils");
+var htmlparser = htmlparser || require("htmlparser2");
+var DomUtils = DomUtils || require("domutils");
 
 
-var PrivateAutoLayout = function() {
+// var PrivateAutoLayout = function() {
 
-};
+// };
 var AutoLayout = function() {
-	var _autoLayout = null;
-	this.shared = function() {
-		if (_autoLayout == null) {
-			_autoLayout = new PrivateAutoLayout();
-		}
-		return _autoLayout;
-	};
+	// var _autoLayout = null;
+	// this.shared = function() {
+	// 	if (_autoLayout == null) {
+	// 		_autoLayout = new PrivateAutoLayout();
+	// 	}
+	// 	return _autoLayout;
+	// };
 };
 
 
@@ -49,6 +49,34 @@ var AutoLayout = function() {
 // 	</p>															\
 // </div>';
 
+
+
+var aSnippet = '<div id="word" data-ish-class="WordView"> 									\
+	<ul>															\
+		<li>														\
+			test													\
+		</li>														\
+	</ul>															\
+	<header>															\
+		<article>														\
+			<p data-ish-class="FirstView" data-ish-name="infoView">		\
+				<svg data-ish-class="GraphicView" data-ish-name="graphicView">		\
+					put infographic here										\
+				</svg>														\
+			</p>														\
+			<div>														\
+				<div>														\
+					<p data-ish-class="SecondView" data-ish-name="infoView">	\
+						put article here									\
+					</p>													\
+				</div>														\
+			</div>														\
+		</article>														\
+	</header>														\
+	<p>																\
+		&copy; Copyright 2015 Ben Syverson							\
+	</p>															\
+</div>';
 
 
 var firstChildWithView = function(node) {
@@ -90,37 +118,9 @@ var emptyElement = function(node) {
     return newElement;
 };
 
-var populateView = function(node) {
-	var containerClass = node.attribs ? node.attribs['data-ish-class'] : null;
-	var containerName = node.attribs ? node.attribs['data-ish-name'] : null;
-
-	var containerView = null;
-
-	if (containerClass) {
-		containerView = new View(null, containerName);
-	} else {
-		containerView = new View(null, containerName);
-	}
-
-	var first = -1;
-	var last = node.children ? node.children.length : -1;
-
-	var implicitElements = emptyElement(emptyDiv);
-	var newElement = emptyElement(node);
-
-	var addImplicitView = function() {
-		if (implicitElements.children.length > 0) {
-			var html = trim(DomUtils.getInnerHTML(implicitElements));
-			if (html.length > 0) {
-				var implicitView = new View();
-				implicitView.templateName = null;
-				implicitView.templateConst = html;
-				containerView.addSubview(implicitView);
-			}
-			implicitElements = emptyElement(emptyDiv);
-		}
-	}
-
+var numberOfChildrenWithViews = function(node) {
+	// How many of my direct children have views?
+	if (nodeIsView(node)) return 1;
 	var viewCount = 0;
 	if (node.children) {
 		for (var i= 0; i < node.children.length; i++) {
@@ -129,84 +129,178 @@ var populateView = function(node) {
 			if (aNode !== null) viewCount++;
 		}
 	}
-	if (viewCount == 0) {
-		containerView.templateName = null;
-		containerView.templateConst = DomUtils.getOuterHTML(node);
-		return containerView;
+	return viewCount;
+};
+
+var viewFromNode = function(node) {
+	var attribs = attribsFromView(node);
+	return new View(null, attribs.name);
+};
+
+var nodeIsView = function(node) {
+	return (node.attribs && node.attribs['data-ish-class']);
+}
+
+var attribsFromView = function(node){
+	var containerClass = node.attribs ? node.attribs['data-ish-class'] : null;
+	var containerName = node.attribs ? node.attribs['data-ish-name'] : null;
+	return {
+		className: containerClass,
+		name: containerName,
 	}
-
-
-	for (var i= 0; i < node.children.length; i++) {
-		var child = node.children[i];
-		var viewChild = firstChildWithView(child);
-		
-		if (viewChild !== null) {
-			addImplicitView();
-			if (first < 0) {
-				first = i;
-			}
-
-			last = i;
-
-			if ((viewCount == 1) && (viewChild !== child)) {
-				containerView.addSubview(populateView(viewChild));
-
-				DomUtils.replaceElement(viewChild, htmlparser.parseDOM("put subviews (unescaped) here")[0]);
-				DomUtils.appendChild(newElement, child);
-			} else {
-				if (first == i) {
-					DomUtils.appendChild(newElement, htmlparser.parseDOM("put subviews (unescaped) here")[0]);
-				}
-				containerView.addSubview(populateView(child));
-
-				DomUtils.removeElement(child);
-			}
-		} else if (last < i) {
-			DomUtils.appendChild(implicitElements, child);
-		} else {
-			DomUtils.appendChild(newElement, child);
-		}
-	}
-
-
-	for (var i = 0; i < implicitElements.children.length; i++){
-		DomUtils.appendChild(newElement, implicitElements.children[i]);
-	}
-
-	containerView.templateName = null;
-	containerView.templateConst = DomUtils.getOuterHTML(newElement);
-	return containerView;
 }
 
 
-PrivateAutoLayout.prototype.viewForHTML = function(html, normalizeWhitespace) {
-	var self = this;
-	var dom =  htmlparser.parseDOM(trim(html), {normalizeWhitespace: normalizeWhitespace ? true : false});
-	return populateView(dom[0]);
+
+var treeForNode = function(parentView, node) {
+	// println("\n\n## " + node.name);
+	var subTree = emptyElement(node);
+
+	if (node.children) {
+		if (node.children.length < 1) {
+			// println("  " + node.name  + " has no children.");
+			return node;
+		}
+	} else {
+		// println("  " + node.name  + " has no children.");
+		return node;
+	}
+
+	var childViewCount = numberOfChildrenWithViews(node);
+
+	if (childViewCount == 1) {
+		// println("  " + node.name  + " has ONE subview.");
+		for (var i = 0 ; i < node.children.length; i++) {
+			var child = node.children[i];
+			if (nodeIsView(child)) {
+				// println("  Found a view named " + child.name);
+				var aView = viewFromNode(child);
+				var subviewTree = treeForNode(aView, child);
+				var html = DomUtils.getInnerHTML(node);
+				aView.templateConst = html;
+				aView.templateName = null;
+
+				parentView.addSubview(aView);
+				parentView = aView;
+
+				DomUtils.appendChild(subTree, htmlparser.parseDOM("insert subviews (unescaped) here")[0]);
+			} else {
+				// println("  Getting subtree of " + child.name);
+				DomUtils.appendChild(subTree, treeForNode(parentView, child));
+			}
+		}
+	} else if (childViewCount > 1) {
+		// println("  " + node.name + " has " + childViewCount + " subviews.");
+		var first = -1;
+		var last = node.children.length;
+		var childCounts = [];
+		var implicitElements = emptyElement(emptyDiv);
+		for (var i = 0 ; i < node.children.length; i++) {
+			var child = node.children[i];
+			var subChildCount = numberOfChildrenWithViews(child);
+			// println("    " + child.name + " has " + subChildCount + " views");
+			childCounts[i] = subChildCount;
+			if (subChildCount > 0) {
+				if (first < 0) {
+					first = i;
+				}
+				last = i;
+			}
+		}
+
+		// println("  first is at " + first + ", and the last is at " + last);
+
+		for (var i = 0 ; i < node.children.length; i++) {
+			var child = node.children[i];
+			var subChildCount = childCounts[i];
+
+			if ((i < first) || (i > last)) {
+				// If we're before or after the subviews, just add us to the tree.
+				// println("    …pre/post. Adding " + child.name);
+				DomUtils.appendChild(subTree, child);
+			} else if ((i >= first) && (i <= last)) {
+				// println("    ### Adding " + child.name);
+				// Otherwise, we're a subview or between subviews.
+
+				if (subChildCount > 0) {
+					if (i == first) {
+						// println("               " + child.name + " is the first.");
+						// If we're the first subview, export a single text node to represent all the subviews.
+						DomUtils.appendChild(subTree, htmlparser.parseDOM("insert subviews (unescaped) here")[0]);
+					} 
+
+					if (implicitElements.children.length > 0) {
+						var aView = viewFromNode(child);
+						var html = trim(DomUtils.getInnerHTML(implicitElements));
+						if (html.length > 0) {
+							var implicitView = new View();
+							implicitView.templateName = null;
+							implicitView.templateConst = html;
+							parentView.addSubview(implicitView);
+						}
+						implicitElements = emptyElement(emptyDiv);
+					}
+
+					var aView = viewFromNode(child);
+					var subviewTree = treeForNode(aView, child);
+					var html = DomUtils.getOuterHTML(subviewTree);
+					aView.templateConst = html;
+					aView.templateName = null;
+					println("               " + child.name + ": " + html);
+					parentView.addSubview(aView);
+				} else {
+					// this has no subviews.
+					DomUtils.appendChild(implicitElements, child);
+				}
+			}
+		}
+	} else {
+		return node;
+	}
+	return subTree;
 };
 
-// println("\n\n");
-// var printSubviews = function(aView, anIndent) {
-// 	println(anIndent + "View: " + aView.name + " (" + aView.uniqueId() + ")");
-// 	println(anIndent + " " + aView.templateConst);
+AutoLayout.prototype.viewForHTML = function(html, normalizeWhitespace) {
+	var self = this;
+	var dom =  htmlparser.parseDOM(trim(html), {normalizeWhitespace: normalizeWhitespace ? true : false});
 
-// 	for (var i=0 ; i < aView.subviews.length; i++) {
-// 		printSubviews(aView.subviews[i], anIndent + '    ');
-// 	}
-// };
-// printSubviews(newView, '');
-// println("\n\n");
+	var aView = new View();
+	var tree = treeForNode(aView, dom[0]);
+	var html = DomUtils.getOuterHTML(tree);
+	aView.templateConst = html;
+	aView.templateName = null;
+
+	return aView;
+};
 
 
-// println("Initializing " + newView.uniqueId());
-// newView.renderHTML(function(err, html){
-// 	println("===================== FINAL CALLBACK.");
-// 	println(newView.templateConst);
 
-// 	println("----------------");
-// 	println(html);
-// });
-//println(newView.templateConst);
+var al = new AutoLayout();
+var newView = al.viewForHTML(aSnippet, true);
+
+
+println("\n\n");
+var printSubviews = function(aView, anIndent) {
+	println("\n");
+	println(anIndent + "View: " + aView.name + " (" + aView.uniqueId() + ")");
+	println(anIndent + aView.templateConst);
+
+	for (var i=0 ; i < aView.subviews.length; i++) {
+		printSubviews(aView.subviews[i], anIndent + '    ');
+	}
+};
+printSubviews(newView, '');
+println("\n\n");
+
+newView.renderHTML(function(err, html){
+	println("===================== FINAL CALLBACK.");
+	println(newView.templateConst);
+
+	println("----------------\n\n");
+	println(html);
+	println("\n\n----------");
+});
+// println(newView.templateConst);
 
 module.exports = View;
 
