@@ -7,7 +7,6 @@ var OrgStuffHereQueue = OrgStuffHereQueue || require('./queue.js');
 
 var Representable = Representable || require('./ishmael.js');
 
-
 /**
  * View
  * @constructor
@@ -25,7 +24,7 @@ var View = function(templateName, aName, cb) {
 	this.classes = [];
 
 	this.addMarkup = true;
-	this.useAutoLayout = false;
+	this.useAutoLayout = true;
 
 	this.locals = {};
 
@@ -97,18 +96,19 @@ View.prototype.init = function(cb) {
 	};
 	if (self.templateName) {
 		if (self.useAutoLayout) {
+			println("Getting autolayout template.");
 			PutStuffHere.shared().getHTML(self.templateName, function(err, html){
-				var strippedHTML = self.autoLayout(html);
-				var func = PutStuffHere.shared().compileText(strippedHTML, true);
-				setTemplate(null, func);
+				self.autoLayout(html);
+				initDone();
 			});
 		} else {
 			PutStuffHere.shared().getTemplateFunction(self.templateName, setTemplate);
 		}
 	} else {
-		self.templateConst = self.autoLayout(self.templateConst);
-		self.template = PutStuffHere.shared().compileText(self.templateConst);
-		self.initializeSubviews(initDone);
+		// println("Trying to compile: " + self.templateConst);
+		// self.templateConst = self.autoLayout(self.templateConst);
+		var func = PutStuffHere.shared().compileText(self.templateConst);
+		setTemplate(null, func);
 	}
 	return self;
 };
@@ -116,7 +116,38 @@ View.prototype.init = function(cb) {
 
 View.prototype.autoLayout = function(html) {
 	var self = this;
+	var AutoLayout = AutoLayout || require('./ishmael-layoutview.js');
+
 	if (self.useAutoLayout !== true) return html;
+
+	var al = new AutoLayout();
+	al.autoLayoutViewWithHTML(self, html, true);
+
+	var func = PutStuffHere.shared().compileText(self.templateConst);
+	self.template = func;
+};
+
+View.prototype.subview = function(selector) {
+	var self = this;
+
+	var selectByName = function(aName) {
+		for (var i = 0; i < self.subviews.length; i++) {
+			var aSubview = self.subviews[i];
+			if (aSubview.name === aName) return aSubview;
+		
+			var aDeepSubview = self.subviews[i].subview(selector);
+			if (aDeepSubview) return aDeepSubview;
+		}
+	};
+
+	if (typeof(selector) === typeof({})){
+		if (selector.hasOwnProperty('name')) {
+			return selectByName(selector['name']);
+		}
+	} else if (typeof(selector) === typeof("string")) {
+		return selectByName(selector);
+	}
+	return null;
 };
 
 View.prototype.addClass = function(className){
@@ -158,10 +189,6 @@ View.prototype.element = function(){
 
 View.prototype.initializeSubviews = function(cb){
 	var self = this;
-
-	if (self.useAutoLayout === true) {
-		self.autoLayout();
-	}
 
 	if (self.subviews.length > 0) {
 		var i = 0;

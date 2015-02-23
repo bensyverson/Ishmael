@@ -5,11 +5,13 @@ var View = View || require('./ishmael-view.js');
 var htmlparser = htmlparser || require("htmlparser2");
 var DomUtils = DomUtils || require("domutils");
 
-
 // var PrivateAutoLayout = function() {
 
 // };
 var AutoLayout = function() {
+	// This will be prepended to any require() calls to get the View's object.
+	this.viewRoot = './radar-';
+
 	// var _autoLayout = null;
 	// this.shared = function() {
 	// 	if (_autoLayout == null) {
@@ -132,10 +134,7 @@ var numberOfChildrenWithViews = function(node) {
 	return viewCount;
 };
 
-var viewFromNode = function(node) {
-	var attribs = attribsFromView(node);
-	return new View(null, attribs.name);
-};
+
 
 var nodeIsView = function(node) {
 	return (node.attribs && node.attribs['data-ish-class']);
@@ -150,12 +149,56 @@ var attribsFromView = function(node){
 	}
 }
 
-var createViewForImplicitElements = function(parentView, implicitElements, child) {
+AutoLayout.prototype.viewFromNode = function(node) {
+	var self = this;
+	var attribs = attribsFromView(node);
+	var className = attribs['className'];
+	var aView = null;
+	if ((typeof(className) !== typeof(undefined)) && (className !== null)) {
+		if (className !== 'View') {
+			var ctx = (function(){ return this; })();
+			if (ctx) {
+				println("Searching for '" + className + "' in: " + ctx);
+				if (typeof(ctx[className]) !== typeof(undefined)) {
+					println("Found something :  " + ctx[className])
+					if (ctx[className] instanceof View) {
+						println("Found an instance of View: " + ctx[className]);
+						aView = new ctx[className](null, attribs.name);
+					}
+				} 
+			} else {
+				try {
+					println("Trying to require() '" + self.viewRoot + className + ".js' in: " + ctx);
+					var requiredClass = require(self.viewRoot + className + '.js') || null;
+					if (requiredClass !== null) {
+						println("Got it.");
+						aView = new requiredClass(null, attribs.name);
+					}
+				} catch(e) {
+					println("No go on the require()");
+				}
+			}
+		}
+	}
+
+	if (aView === null) {
+		aView = new View(null, attribs.name);
+	}
+
+	// if all else fails
+	aView.useAutoLayout = false;
+	return aView;
+};
+
+AutoLayout.prototype.createViewForImplicitElements = function(parentView, implicitElements, child) {
+	var self = this;
 	if (implicitElements.children.length > 0) {
-		var aView = viewFromNode(child);
-		var html = trim(DomUtils.getInnerHTML(implicitElements));
+		var aView = self.viewFromNode(child);
+		var html = DomUtils.getInnerHTML(implicitElements);
+
 		if (html.length > 0) {
 			var implicitView = new View();
+			implicitView.useAutoLayout = false;
 			implicitView.templateName = null;
 			implicitView.templateConst = html;
 			parentView.addSubview(implicitView);
@@ -165,7 +208,8 @@ var createViewForImplicitElements = function(parentView, implicitElements, child
 	return implicitElements;
 }
 
-var treeForNode = function(parentView, node) {
+AutoLayout.prototype.treeForNode = function(parentView, node) {
+	var self = this;
 	var subTree = emptyElement(node);
 
 	if (node.children) {
@@ -184,8 +228,8 @@ var treeForNode = function(parentView, node) {
 			var child = node.children[i];
 			if (nodeIsView(child)) {
 				// If we find a direct view, add it immediately.
-				var aView = viewFromNode(child);
-				var subviewTree = treeForNode(aView, child);
+				var aView = self.viewFromNode(child);
+				var subviewTree = self.treeForNode(aView, child);
 				var html = DomUtils.getInnerHTML(node);
 				aView.templateConst = html;
 				aView.templateName = null;
@@ -196,7 +240,7 @@ var treeForNode = function(parentView, node) {
 				DomUtils.appendChild(subTree, htmlparser.parseDOM("insert subviews (unescaped) here")[0]);
 			} else {
 				// Otherwise, add the tree for the given element.
-				DomUtils.appendChild(subTree, treeForNode(parentView, child));
+				DomUtils.appendChild(subTree, self.treeForNode(parentView, child));
 			}
 		}
 	} else if (childViewCount > 1) {
@@ -236,12 +280,12 @@ var treeForNode = function(parentView, node) {
 						DomUtils.appendChild(subTree, htmlparser.parseDOM("insert subviews (unescaped) here")[0]);
 					} else {
 						// Important: If we've saved up implicit elements between this view and the last, create an anonymous view to contain them.
-						implicitElements = createViewForImplicitElements(parentView, implicitElements, child);
+						implicitElements = self.createViewForImplicitElements(parentView, implicitElements, child);
 					}
 
 					// Finally, create the view for this node. Note that we're creating this explicitly, because regardless of whether `child` is an explicit view or not, all the children in this range need container views.
-					var aView = viewFromNode(child);
-					var subviewTree = treeForNode(aView, child);
+					var aView = self.viewFromNode(child);
+					var subviewTree = self.treeForNode(aView, child);
 					var html = DomUtils.getOuterHTML(subviewTree);
 					aView.templateConst = html;
 					aView.templateName = null;
@@ -258,51 +302,33 @@ var treeForNode = function(parentView, node) {
 	return subTree;
 };
 
-AutoLayout.prototype.viewForHTML = function(html, normalizeWhitespace) {
+AutoLayout.prototype.viewForHTML = function(someHtml, normalizeWhitespace) {
 	var self = this;
-	var dom =  htmlparser.parseDOM(trim(html), {normalizeWhitespace: normalizeWhitespace ? true : false});
 
 	var aView = new View();
-	var tree = treeForNode(aView, dom[0]);
-	var html = DomUtils.getOuterHTML(tree);
-	aView.templateConst = html;
-	aView.templateName = null;
-
+	aView.useAutoLayout = false;
+	self.autoLayoutViewWithHTML(aView, someHtml, normalizeWhitespace);
 	return aView;
 };
 
 
-
-var al = new AutoLayout();
-var newView = al.viewForHTML(aSnippet, true);
-
-
-println("\n\n");
-var printSubviews = function(aView, anIndent) {
-	println("\n");
-	println(anIndent + "View: " + aView.name + " (" + aView.uniqueId() + ")");
-	println(anIndent + aView.templateConst);
-
-	for (var i=0 ; i < aView.subviews.length; i++) {
-		printSubviews(aView.subviews[i], anIndent + '    ');
+AutoLayout.prototype.autoLayoutViewWithHTML = function(aView, someHtml, normalizeWhitespace) {
+	var self = this;
+	if (!someHtml) {
+		return self;
 	}
+	var dom =  htmlparser.parseDOM(trim(someHtml), {normalizeWhitespace: normalizeWhitespace ? true : false});
+
+	var first = firstChildWithView(dom[0]);
+	if (first !== null) {
+		var tree = self.treeForNode(aView, dom[0]);
+		aView.templateConst = DomUtils.getOuterHTML(tree);
+		aView.templateName = null;
+	}
+	return self;
 };
-printSubviews(newView, '');
-println("\n\n");
-
-newView.renderHTML(function(err, html){
-	println("===================== FINAL CALLBACK.");
-	println(newView.templateConst);
-
-	println("----------------\n\n");
-	println(html);
-	println("\n\n----------");
-});
-// println(newView.templateConst);
-
-module.exports = View;
 
 
-
+module.exports = AutoLayout;
 
 

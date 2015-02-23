@@ -42,8 +42,25 @@ var nodeForHTML = function(html) {
 	return getNode(html);
 };
 
+function getElementsWithClass(element, matchClass) {
+	var re = new RegExp("\\b" + matchClass + "\\b");
+	var matches = [];
+	var elements = document.getElementsByTagName('*');
+
+	for (var i = 0; i < elements.length; i++) {
+		var el = elements[i];
+		if (re.exec(el.className) &&
+			element.contains(el)) {
+			matches.push(el);
+		}
+	}
+   return matches; 
+}
+
+
 var DomHelper = {
 	nodeForHTML: nodeForHTML,
+	getElementsWithClass: getElementsWithClass,
 };
 
 module.exports = DomHelper;
