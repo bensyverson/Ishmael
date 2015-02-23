@@ -150,30 +150,40 @@ var attribsFromView = function(node){
 	}
 }
 
-
+var createViewForImplicitElements = function(parentView, implicitElements, child) {
+	if (implicitElements.children.length > 0) {
+		var aView = viewFromNode(child);
+		var html = trim(DomUtils.getInnerHTML(implicitElements));
+		if (html.length > 0) {
+			var implicitView = new View();
+			implicitView.templateName = null;
+			implicitView.templateConst = html;
+			parentView.addSubview(implicitView);
+		}
+		implicitElements = emptyElement(emptyDiv);
+	}
+	return implicitElements;
+}
 
 var treeForNode = function(parentView, node) {
-	// println("\n\n## " + node.name);
 	var subTree = emptyElement(node);
 
 	if (node.children) {
 		if (node.children.length < 1) {
-			// println("  " + node.name  + " has no children.");
 			return node;
 		}
 	} else {
-		// println("  " + node.name  + " has no children.");
 		return node;
 	}
 
 	var childViewCount = numberOfChildrenWithViews(node);
 
 	if (childViewCount == 1) {
-		// println("  " + node.name  + " has ONE subview.");
+		// If only one of our children contains a view, then iterate through the elements.
 		for (var i = 0 ; i < node.children.length; i++) {
 			var child = node.children[i];
 			if (nodeIsView(child)) {
-				// println("  Found a view named " + child.name);
+				// If we find a direct view, add it immediately.
 				var aView = viewFromNode(child);
 				var subviewTree = treeForNode(aView, child);
 				var html = DomUtils.getInnerHTML(node);
@@ -185,21 +195,21 @@ var treeForNode = function(parentView, node) {
 
 				DomUtils.appendChild(subTree, htmlparser.parseDOM("insert subviews (unescaped) here")[0]);
 			} else {
-				// println("  Getting subtree of " + child.name);
+				// Otherwise, add the tree for the given element.
 				DomUtils.appendChild(subTree, treeForNode(parentView, child));
 			}
 		}
 	} else if (childViewCount > 1) {
-		// println("  " + node.name + " has " + childViewCount + " subviews.");
+		// If multiple direct children of a node contain views, then those nodes (and any nodes in-between) will become container views.
+
+		// First, find the first and last nodes with a view.
 		var first = -1;
 		var last = node.children.length;
 		var childCounts = [];
 		var implicitElements = emptyElement(emptyDiv);
 		for (var i = 0 ; i < node.children.length; i++) {
-			var child = node.children[i];
-			var subChildCount = numberOfChildrenWithViews(child);
-			// println("    " + child.name + " has " + subChildCount + " views");
-			childCounts[i] = subChildCount;
+			var subChildCount = numberOfChildrenWithViews(node.children[i]);
+			childCounts[i] = subChildCount; // Cache this.
 			if (subChildCount > 0) {
 				if (first < 0) {
 					first = i;
@@ -208,48 +218,36 @@ var treeForNode = function(parentView, node) {
 			}
 		}
 
-		// println("  first is at " + first + ", and the last is at " + last);
-
+		// Then step through them, either adding nodes to our subTree, or adding subviews to our parent View.
 		for (var i = 0 ; i < node.children.length; i++) {
 			var child = node.children[i];
 			var subChildCount = childCounts[i];
 
 			if ((i < first) || (i > last)) {
-				// If we're before or after the subviews, just add us to the tree.
-				// println("    …pre/post. Adding " + child.name);
+				// If we're before or after the subviews, just add this node to the tree normally.
 				DomUtils.appendChild(subTree, child);
 			} else if ((i >= first) && (i <= last)) {
-				// println("    ### Adding " + child.name);
-				// Otherwise, we're a subview or between subviews.
+				// Otherwise, we're a subview *or* between subviews.
 
 				if (subChildCount > 0) {
+					// In this case, this child node contains a View.
 					if (i == first) {
-						// println("               " + child.name + " is the first.");
 						// If we're the first subview, export a single text node to represent all the subviews.
 						DomUtils.appendChild(subTree, htmlparser.parseDOM("insert subviews (unescaped) here")[0]);
-					} 
-
-					if (implicitElements.children.length > 0) {
-						var aView = viewFromNode(child);
-						var html = trim(DomUtils.getInnerHTML(implicitElements));
-						if (html.length > 0) {
-							var implicitView = new View();
-							implicitView.templateName = null;
-							implicitView.templateConst = html;
-							parentView.addSubview(implicitView);
-						}
-						implicitElements = emptyElement(emptyDiv);
+					} else {
+						// Important: If we've saved up implicit elements between this view and the last, create an anonymous view to contain them.
+						implicitElements = createViewForImplicitElements(parentView, implicitElements, child);
 					}
 
+					// Finally, create the view for this node. Note that we're creating this explicitly, because regardless of whether `child` is an explicit view or not, all the children in this range need container views.
 					var aView = viewFromNode(child);
 					var subviewTree = treeForNode(aView, child);
 					var html = DomUtils.getOuterHTML(subviewTree);
 					aView.templateConst = html;
 					aView.templateName = null;
-					println("               " + child.name + ": " + html);
 					parentView.addSubview(aView);
 				} else {
-					// this has no subviews.
+					// This node has no subviews, so we'll collect it in the implicitElements subtree. When the next view gets added, we'll make a container view for all of implicitElements.
 					DomUtils.appendChild(implicitElements, child);
 				}
 			}
