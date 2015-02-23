@@ -1,10 +1,12 @@
 "use strict";
 
+var println = function(x){console.log(x);}
 var PutStuffHere = PutStuffHere || require('./putstuffhere.js');
 
 var OrgStuffHereQueue = OrgStuffHereQueue || require('./queue.js');
 
 var Representable = Representable || require('./ishmael.js');
+
 
 /**
  * View
@@ -21,6 +23,9 @@ var View = function(templateName, aName, cb) {
 	this.superview = null;
 
 	this.classes = [];
+
+	this.addMarkup = true;
+	this.useAutoLayout = false;
 
 	this.locals = {};
 
@@ -79,17 +84,39 @@ View.prototype.init = function(cb) {
 		if (cb) cb(null, self.uniqueId());
 	};
 
+	if (self.initialized) {
+		initDone();
+		return;
+	}
+
+	var setTemplate = function(err, template) {
+		if (!err) {
+			self.template = template;
+		}
+		self.initializeSubviews(initDone);
+	};
 	if (self.templateName) {
-		PutStuffHere.shared().getTemplateFunction(self.templateName, function(err, func){
-			self.template = func;
-			self.initializeSubviews(initDone);
-		});
+		if (self.useAutoLayout) {
+			PutStuffHere.shared().getHTML(self.templateName, function(err, html){
+				var strippedHTML = self.autoLayout(html);
+				var func = PutStuffHere.shared().compileText(strippedHTML, true);
+				setTemplate(null, func);
+			});
+		} else {
+			PutStuffHere.shared().getTemplateFunction(self.templateName, setTemplate);
+		}
 	} else {
-		println("Compiling " + self.templateConst);
+		self.templateConst = self.autoLayout(self.templateConst);
 		self.template = PutStuffHere.shared().compileText(self.templateConst);
 		self.initializeSubviews(initDone);
 	}
 	return self;
+};
+
+
+View.prototype.autoLayout = function(html) {
+	var self = this;
+	if (self.useAutoLayout !== true) return html;
 };
 
 View.prototype.addClass = function(className){
@@ -131,6 +158,10 @@ View.prototype.element = function(){
 
 View.prototype.initializeSubviews = function(cb){
 	var self = this;
+
+	if (self.useAutoLayout === true) {
+		self.autoLayout();
+	}
 
 	if (self.subviews.length > 0) {
 		var i = 0;
@@ -362,21 +393,23 @@ View.prototype._render = function(isBrowser) {
 		renderedHTML = self.template(self.locals);
 	}
 
+	if (self.addMarkup) {
+		renderedHTML = renderedHTML
+			.replace(/^([^<]*<[a-z0-9]+)([>\s])/i, "$1 data-ish=\"" + self.uniqueId() + "\"$2");
 
-	renderedHTML = renderedHTML
-		.replace(/^([^<]*<[a-z0-9]+)([>\s])/i, "$1 data-ish=\"" + self.uniqueId() + "\"$2");
-
-	// Add any class names to the root element. It's important not to add style classes via Ishmael—that should be left in the HTML template. The classes are for things like 'selected', which allow CSS to reflect our internal state. If you need more than a class name or two to represent the state, the change in view is probably best represented as a different View subclass.
-	if (self.classes.length > 0) {
-		var classList = self.classes.join(' ');
-		if (renderedHTML.match(/^[^<]*<[a-z0-9]+\s+[^>]+class\s*=/i)) {
-			renderedHTML = renderedHTML
-				.replace(/^([^<]*<[a-z0-9]+\s+[^>]+)\sclass\s*=\s*"([^"]+)"/i, "$1 class=\"$2 " + classList + "\"");
-		} else {
-			renderedHTML = renderedHTML
-				.replace(/^([^<]*<[^>]+)>/i, "$1 class=\"" + classList + "\">");
+		// Add any class names to the root element. It's important not to add style classes via Ishmael—that should be left in the HTML template. The classes are for things like 'selected', which allow CSS to reflect our internal state. If you need more than a class name or two to represent the state, the change in view is probably best represented as a different View subclass.
+		if (self.classes.length > 0) {
+			var classList = self.classes.join(' ');
+			if (renderedHTML.match(/^[^<]*<[a-z0-9]+\s+[^>]+class\s*=/i)) {
+				renderedHTML = renderedHTML
+					.replace(/^([^<]*<[a-z0-9]+\s+[^>]+)\sclass\s*=\s*"([^"]+)"/i, "$1 class=\"$2 " + classList + "\"");
+			} else {
+				renderedHTML = renderedHTML
+					.replace(/^([^<]*<[^>]+)>/i, "$1 class=\"" + classList + "\">");
+			}
 		}
 	}
+
 
 	delete self.locals['subviews'];
 
@@ -391,8 +424,8 @@ View.prototype.renderHTML = function(cb) {
 	var self = this;
 
 	self.enqueue(function() {
-		// Layout if needed. This lets a subclass change its layout (add/remove subviews) based on the locals.
 		self.layoutSubviews({keepElements: true});
+		// Layout if needed. This lets a subclass change its layout (add/remove subviews) based on the locals.
 
 		self.initializeSubviews(function() {
 			if (typeof(cb) === typeof(function(){})) cb(null, self._render());	
@@ -409,12 +442,15 @@ View.prototype.renderSnapshot = function(cb) {
 	var self = this;
 
 	self.enqueue(function() {
+		self.layoutSubviews({keepElements: true});
+
 		self.initializeSubviews(function() {
 			if (typeof(cb) === typeof(function(){})) cb(null, self._render());	
 		});
 	});
 	return self;
 };
+
 
 
 module.exports = View;

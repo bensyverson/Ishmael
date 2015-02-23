@@ -1,7 +1,7 @@
 var View = View || require('./ishmael-view.js');
 var ViewController = ViewController || require('./ishmael-viewcontroller.js');
 var Router = Router || require('./ishmael-router.js');
-var i18n = i18n || require('i18next');
+// var i18n = i18n || require('i18next');
 var Representable = Representable || require('./ishmael.js');
 var PutStuffHere = PutStuffHere || require('./putstuffhere.js');
 
@@ -51,16 +51,17 @@ App.prototype.bootstrap = function(anId, cb) {
 	self.rootId = anId;
 	var option = { resGetPath: '../locales/__lng__/__ns__.json' };
 
-	i18n.init(option, function() {
+	// i18n.init(option, function() {
 		self.rootViewController().loadView();
 		self.rootViewController().viewDidLoad();
 
 		
+		self.rootViewController().viewWillAppear();
 		self.rootViewController().view.bindToAppElement(self, document.getElementById(anId), function(err, id) {
-			self.rootViewController().viewWillAppear();
+			self.rootViewController().viewDidAppear();
 			if (typeof(cb) === typeof(function(){})) cb(err, id);
 		});
-	});
+	// });
 };
 
 /**
@@ -98,15 +99,16 @@ App.prototype.mouthToMouth = function(cb) {
 	var self = this;
 	var option = { resGetPath: '../locales/__lng__/__ns__.json' };
 
-	i18n.init(option, function() {
+	// i18n.init(option, function() {
 		self.rootViewController().viewDidLoad();
 		self.rootViewController().viewWillAppear();
 		var view = self.rootViewController().view;
 		view.init(function(err, uniqueId){
+			self.rootViewController().viewDidAppear();
 			view.activate();
 			if (typeof(cb) === typeof(function(){})) cb(err, uniqueId);
 		});
-	});
+	// });
 };
 
 /**

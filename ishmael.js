@@ -47,7 +47,11 @@ var uuid = uuid || (_uuid ? _uuid.shared : null);
 
 
 if (typeof sails === typeof(undefined)) {
-	window.sails = {};
+	if (typeof(window) !== typeof(undefined)) {
+		window.sails = {};
+	} else if (typeof(global) !== typeof(undefined)) {
+		global.sails = {};
+	}
 }
 
 String.prototype.hasPrefix = function(prefix) {

@@ -139,5 +139,12 @@ ViewController.prototype.viewWillAppear = function(isAnimated) {
 	var self = this;
 };
 
+/**
+ * Alert that the view did appear.
+ */
+ViewController.prototype.viewDidAppear = function(isAnimated) {
+	var self = this;
+};
+
 
 module.exports = ViewController;

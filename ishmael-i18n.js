@@ -1,4 +1,4 @@
-var i18n = i18n || require('i18next');
+// var i18n = i18n || require('i18next');
 
 /**
  * NSLocalizedString: Please note that this must be 
@@ -6,7 +6,11 @@ var i18n = i18n || require('i18next');
  * you should launch Ishamel from inside i18n.init.
  */
 var NSLocalizedString = function(key) {
-	return i18n.t(key);
+	return key;//i18n.t(key);
 };
 
-module.exports = NSLocalizedString;
+
+
+module.exports = {
+	NSLocalizedString: NSLocalizedString,
+};
