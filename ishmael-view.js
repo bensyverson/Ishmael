@@ -96,7 +96,7 @@ View.prototype.init = function(cb) {
 	};
 	if (self.templateName) {
 		if (self.useAutoLayout) {
-			println("Getting autolayout template.");
+			println("Getting autolayout template. " + self.templateName);
 			PutStuffHere.shared().getHTML(self.templateName, function(err, html){
 				self.autoLayout(html);
 				initDone();
@@ -105,7 +105,6 @@ View.prototype.init = function(cb) {
 			PutStuffHere.shared().getTemplateFunction(self.templateName, setTemplate);
 		}
 	} else {
-		// println("Trying to compile: " + self.templateConst);
 		// self.templateConst = self.autoLayout(self.templateConst);
 		var func = PutStuffHere.shared().compileText(self.templateConst);
 		setTemplate(null, func);
@@ -116,9 +115,9 @@ View.prototype.init = function(cb) {
 
 View.prototype.autoLayout = function(html) {
 	var self = this;
-	var AutoLayout = AutoLayout || require('./ishmael-layoutview.js');
-
 	if (self.useAutoLayout !== true) return html;
+
+	var AutoLayout = AutoLayout || require('./ishmael-layoutview.js');
 
 	var al = new AutoLayout();
 	al.autoLayoutViewWithHTML(self, html, true);
@@ -178,12 +177,13 @@ View.prototype.removeClass = function(className){
 
 View.prototype.element = function(){
 	var self = this;
-	var elements = document.querySelectorAll("[data-ish=\"" + self.uniqueId() + "\"]");
-	if (elements.length > 0) {
-		return elements[0];
-	} else {
-		return null;
+	if (typeof(document) !== typeof(undefined)) {
+		var elements = document.querySelectorAll("[data-ish=\"" + self.uniqueId() + "\"]");
+		if (elements.length > 0) {
+			return elements[0];
+		}
 	}
+	return null;
 };
 
 

@@ -8,9 +8,14 @@ var DomUtils = DomUtils || require("domutils");
 // var PrivateAutoLayout = function() {
 
 // };
-var AutoLayout = function() {
+var AutoLayout = function(options) {
 	// This will be prepended to any require() calls to get the View's object.
 	this.viewRoot = './radar-';
+	this.setInstanceVariables = true;
+	if (options) {
+		this.viewRoot = this.viewRoot || options.viewRoot;
+		this.setInstanceVariables = this.setInstanceVariables || options.setInstanceVariables;
+	}
 
 	// var _autoLayout = null;
 	// this.shared = function() {
@@ -149,29 +154,25 @@ var attribsFromView = function(node){
 	}
 }
 
-AutoLayout.prototype.viewFromNode = function(node) {
+AutoLayout.prototype.viewFromNode = function(node, parentView) {
 	var self = this;
 	var attribs = attribsFromView(node);
 	var className = attribs['className'];
+	var instanceName = attribs['name'];
 	var aView = null;
 	if ((typeof(className) !== typeof(undefined)) && (className !== null)) {
 		if (className !== 'View') {
 			var ctx = (function(){ return this; })();
 			if (ctx) {
-				println("Searching for '" + className + "' in: " + ctx);
 				if (typeof(ctx[className]) !== typeof(undefined)) {
-					println("Found something :  " + ctx[className])
 					if (ctx[className] instanceof View) {
-						println("Found an instance of View: " + ctx[className]);
 						aView = new ctx[className](null, attribs.name);
 					}
 				} 
 			} else {
 				try {
-					println("Trying to require() '" + self.viewRoot + className + ".js' in: " + ctx);
 					var requiredClass = require(self.viewRoot + className + '.js') || null;
 					if (requiredClass !== null) {
-						println("Got it.");
 						aView = new requiredClass(null, attribs.name);
 					}
 				} catch(e) {
@@ -185,6 +186,20 @@ AutoLayout.prototype.viewFromNode = function(node) {
 		aView = new View(null, attribs.name);
 	}
 
+	if (self.setInstanceVariables) {
+		if ((typeof(instanceName) !== typeof(undefined)) && (instanceName !== null)) {
+			var aParent = parentView;
+			while (aParent) {
+				if (aParent.hasOwnProperty(instanceName) &&
+					(typeof(aParent[instanceName]) !== typeof(function(){}))) {
+					aParent[instanceName] = aView;
+					break;
+				}
+				aParent = aParent.superview;
+			}
+		}
+	}
+
 	// if all else fails
 	aView.useAutoLayout = false;
 	return aView;
@@ -193,7 +208,7 @@ AutoLayout.prototype.viewFromNode = function(node) {
 AutoLayout.prototype.createViewForImplicitElements = function(parentView, implicitElements, child) {
 	var self = this;
 	if (implicitElements.children.length > 0) {
-		var aView = self.viewFromNode(child);
+//		var aView = self.viewFromNode(child, parentView);
 		var html = DomUtils.getInnerHTML(implicitElements);
 
 		if (html.length > 0) {
@@ -228,13 +243,14 @@ AutoLayout.prototype.treeForNode = function(parentView, node) {
 			var child = node.children[i];
 			if (nodeIsView(child)) {
 				// If we find a direct view, add it immediately.
-				var aView = self.viewFromNode(child);
+				var aView = self.viewFromNode(child, parentView);
+				parentView.addSubview(aView);
+
 				var subviewTree = self.treeForNode(aView, child);
 				var html = DomUtils.getInnerHTML(node);
 				aView.templateConst = html;
 				aView.templateName = null;
 
-				parentView.addSubview(aView);
 				parentView = aView;
 
 				DomUtils.appendChild(subTree, htmlparser.parseDOM("insert subviews (unescaped) here")[0]);
@@ -284,12 +300,13 @@ AutoLayout.prototype.treeForNode = function(parentView, node) {
 					}
 
 					// Finally, create the view for this node. Note that we're creating this explicitly, because regardless of whether `child` is an explicit view or not, all the children in this range need container views.
-					var aView = self.viewFromNode(child);
+					var aView = self.viewFromNode(child, parentView);
+					parentView.addSubview(aView);
+
 					var subviewTree = self.treeForNode(aView, child);
 					var html = DomUtils.getOuterHTML(subviewTree);
 					aView.templateConst = html;
 					aView.templateName = null;
-					parentView.addSubview(aView);
 				} else {
 					// This node has no subviews, so we'll collect it in the implicitElements subtree. When the next view gets added, we'll make a container view for all of implicitElements.
 					DomUtils.appendChild(implicitElements, child);
@@ -317,6 +334,7 @@ AutoLayout.prototype.autoLayoutViewWithHTML = function(aView, someHtml, normaliz
 	if (!someHtml) {
 		return self;
 	}
+
 	var dom =  htmlparser.parseDOM(trim(someHtml), {normalizeWhitespace: normalizeWhitespace ? true : false});
 
 	var first = firstChildWithView(dom[0]);
