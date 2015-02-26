@@ -8,6 +8,12 @@ var DomUtils = DomUtils || require("domutils");
 // var PrivateAutoLayout = function() {
 
 // };
+/**
+ * Description
+ * @method AutoLayout
+ * @param {} options
+ * @return 
+ */
 var AutoLayout = function(options) {
 	// This will be prepended to any require() calls to get the View's object.
 	this.viewRoot = './radar-';
@@ -86,6 +92,12 @@ var aSnippet = '<div id="word" data-ish-class="WordView"> 									\
 </div>';
 
 
+/**
+ * Description
+ * @method firstChildWithView
+ * @param {} node
+ * @return Literal
+ */
 var firstChildWithView = function(node) {
 	if (node.attribs && node.attribs['data-ish-class']) {
 		return node;
@@ -107,6 +119,12 @@ var firstChildWithView = function(node) {
 
 var indent = '';
 
+/**
+ * Description
+ * @method trim
+ * @param {} aString
+ * @return CallExpression
+ */
 var trim = function(aString) {
 	return aString
 			.replace(/^\s+/, '')
@@ -116,6 +134,12 @@ var trim = function(aString) {
 
 // println(dom);
 var emptyDiv = htmlparser.parseDOM('<div />')[0];
+/**
+ * Description
+ * @method emptyElement
+ * @param {} node
+ * @return newElement
+ */
 var emptyElement = function(node) {
 	var newElement = {};
 	for (var attr in node) {
@@ -125,6 +149,12 @@ var emptyElement = function(node) {
     return newElement;
 };
 
+/**
+ * Description
+ * @method numberOfChildrenWithViews
+ * @param {} node
+ * @return viewCount
+ */
 var numberOfChildrenWithViews = function(node) {
 	// How many of my direct children have views?
 	if (nodeIsView(node)) return 1;
@@ -141,10 +171,22 @@ var numberOfChildrenWithViews = function(node) {
 
 
 
+/**
+ * Description
+ * @method nodeIsView
+ * @param {} node
+ * @return LogicalExpression
+ */
 var nodeIsView = function(node) {
 	return (node.attribs && node.attribs['data-ish-class']);
 }
 
+/**
+ * Description
+ * @method attribsFromView
+ * @param {} node
+ * @return ObjectExpression
+ */
 var attribsFromView = function(node){
 	var containerClass = node.attribs ? node.attribs['data-ish-class'] : null;
 	var containerName = node.attribs ? node.attribs['data-ish-name'] : null;
@@ -154,6 +196,13 @@ var attribsFromView = function(node){
 	}
 }
 
+/**
+ * Description
+ * @method viewFromNode
+ * @param {} node
+ * @param {} parentView
+ * @return aView
+ */
 AutoLayout.prototype.viewFromNode = function(node, parentView) {
 	var self = this;
 	var attribs = attribsFromView(node);
@@ -205,6 +254,14 @@ AutoLayout.prototype.viewFromNode = function(node, parentView) {
 	return aView;
 };
 
+/**
+ * Description
+ * @method createViewForImplicitElements
+ * @param {} parentView
+ * @param {} implicitElements
+ * @param {} child
+ * @return implicitElements
+ */
 AutoLayout.prototype.createViewForImplicitElements = function(parentView, implicitElements, child) {
 	var self = this;
 	if (implicitElements.children.length > 0) {
@@ -223,6 +280,13 @@ AutoLayout.prototype.createViewForImplicitElements = function(parentView, implic
 	return implicitElements;
 }
 
+/**
+ * Description
+ * @method treeForNode
+ * @param {} parentView
+ * @param {} node
+ * @return subTree
+ */
 AutoLayout.prototype.treeForNode = function(parentView, node) {
 	var self = this;
 	var subTree = emptyElement(node);
@@ -319,6 +383,13 @@ AutoLayout.prototype.treeForNode = function(parentView, node) {
 	return subTree;
 };
 
+/**
+ * Description
+ * @method viewForHTML
+ * @param {} someHtml
+ * @param {} normalizeWhitespace
+ * @return aView
+ */
 AutoLayout.prototype.viewForHTML = function(someHtml, normalizeWhitespace) {
 	var self = this;
 
@@ -329,6 +400,14 @@ AutoLayout.prototype.viewForHTML = function(someHtml, normalizeWhitespace) {
 };
 
 
+/**
+ * Description
+ * @method autoLayoutViewWithHTML
+ * @param {} aView
+ * @param {} someHtml
+ * @param {} normalizeWhitespace
+ * @return self
+ */
 AutoLayout.prototype.autoLayoutViewWithHTML = function(aView, someHtml, normalizeWhitespace) {
 	var self = this;
 	if (!someHtml) {

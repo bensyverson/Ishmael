@@ -3,22 +3,44 @@ var Representable = Representable || require('./ishmael.js');
 
 var UIColor = UIColor || require('./ishmael-uicolor.js');
 
+/**
+ * Description
+ * @method Gradient
+ * @return 
+ */
 var Gradient = function() {
 	Representable.call(this);
 	this.colors = [];
 	this.registerClass('Gradient');
 };
 
+/**
+ * Description
+ * @method push
+ * @param {} aColor
+ * @return 
+ */
 Gradient.prototype.push = function(aColor) {
 	var self = this;
 	self.colors.push(aColor);
 };
 
+/**
+ * Description
+ * @method pop
+ * @return CallExpression
+ */
 Gradient.prototype.pop = function() {
 	var self = this;
 	return self.colors.pop();
 };
 
+/**
+ * Description
+ * @method colorForX
+ * @param {} x
+ * @return NewExpression
+ */
 Gradient.prototype.colorForX = function(x) {
 	var self = this;
 

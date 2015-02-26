@@ -4,20 +4,16 @@ var Representable = Representable || require('./ishmael.js');
 /**
  * KeySpline - use bezier curve for transition easing function
  * is inspired from Firefox's nsSMILKeySpline.cpp
- * This function is licensed under the MIT Licens:
- * 
+ * This function is licensed under the MIT License:
  * Copyright (c) 2012 Gaetan Renaudeau <renaudeau.gaetan@gmail.com>
- * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -25,37 +21,86 @@ var Representable = Representable || require('./ishmael.js');
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
-
  * Usage:
  * var spline = new KeySpline(0.25, 0.1, 0.25, 1.0)
  * spline.get(x) => returns the easing value | x must be in [0, 1] range
  * Modified by Ben Syverson 2014/03/21
+ * @constructor
+ * @method GRKeySpline
  * @param {number} mX1 Point 1 X
  * @param {number} mY1 Point 1 Y
  * @param {number} mX2 Point 2 X
  * @param {number} mY2 Point 2 Y
- * @constructor
-*/
+ * @return 
+ */
 var GRKeySpline = function(mX1, mY1, mX2, mY2) {
+  /**
+   * Description
+   * @method get
+   * @param {} aX
+   * @return CallExpression
+   */
   this.get = function(aX) {
     if (mX1 == mY1 && mX2 == mY2) return aX; // linear
     return CalcBezier(GetTForX(aX), mY1, mY2);
   }
  
+  /**
+   * Description
+   * @method A
+   * @param {} aA1
+   * @param {} aA2
+   * @return BinaryExpression
+   */
   function A(aA1, aA2) { return 1.0 - 3.0 * aA2 + 3.0 * aA1; }
+  /**
+   * Description
+   * @method B
+   * @param {} aA1
+   * @param {} aA2
+   * @return BinaryExpression
+   */
   function B(aA1, aA2) { return 3.0 * aA2 - 6.0 * aA1; }
+  /**
+   * Description
+   * @method C
+   * @param {} aA1
+   * @return BinaryExpression
+   */
   function C(aA1)      { return 3.0 * aA1; }
  
   // Returns x(t) given t, x1, and x2, or y(t) given t, y1, and y2.
+  /**
+   * Description
+   * @method CalcBezier
+   * @param {} aT
+   * @param {} aA1
+   * @param {} aA2
+   * @return BinaryExpression
+   */
   function CalcBezier(aT, aA1, aA2) {
     return ((A(aA1, aA2)*aT + B(aA1, aA2))*aT + C(aA1))*aT;
   }
  
   // Returns dx/dt given t, x1, and x2, or dy/dt given t, y1, and y2.
+  /**
+   * Description
+   * @method GetSlope
+   * @param {} aT
+   * @param {} aA1
+   * @param {} aA2
+   * @return BinaryExpression
+   */
   function GetSlope(aT, aA1, aA2) {
     return 3.0 * A(aA1, aA2)*aT*aT + 2.0 * B(aA1, aA2) * aT + C(aA1);
   }
  
+  /**
+   * Description
+   * @method GetTForX
+   * @param {} aX
+   * @return aGuessT
+   */
   function GetTForX(aX) {
     // Newton raphson iteration
     var aGuessT = aX;
@@ -74,8 +119,13 @@ var GRKeySpline = function(mX1, mY1, mX2, mY2) {
 /**
  * Create a cached interpolation
  * @constructor
+ * @method IDCachedInterpolation
+ * @param {} mX1
+ * @param {} mY1
+ * @param {} mX2
+ * @param {} mY2
+ * @return 
  */
-
 var IDCachedInterpolation = function(mX1, mY1, mX2, mY2) {
   Representable.call(this);
 	var self = this;
@@ -86,6 +136,12 @@ var IDCachedInterpolation = function(mX1, mY1, mX2, mY2) {
 		self.values.push(innerSpline.get(i / 1024.0));
 	}
 
+	/**
+	 * Description
+	 * @method get
+	 * @param {} zeroToOne
+	 * @return LogicalExpression
+	 */
 	self.get = function(zeroToOne) {
 		return self.values[parseInt(zeroToOne * 1023.0)] || 0;
 	};

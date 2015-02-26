@@ -7,9 +7,13 @@ var nil = null;
 
 /**
  * Simple control wrapper
- * @param {Object} anElement The original element (optional)
  * @constructor
  * @extends UIView
+ * @method Control
+ * @param {} templateName
+ * @param {} aName
+ * @param {} cb
+ * @return 
  */
 var Control = function(templateName, aName, cb) {
 	var self = this;
@@ -17,6 +21,11 @@ var Control = function(templateName, aName, cb) {
 	
 	var _eventTargets = {};
 
+	/**
+	 * Description
+	 * @method eventTargets
+	 * @return _eventTargets
+	 */
 	this.eventTargets = function() {
 		return _eventTargets;
 	};
@@ -48,12 +57,14 @@ Control.prototype.constructor = Control;
 /** @const {number} */ Control.EventAllEvents			= 0xFFFFFFFF;
 
 
-/** 
+/**
  * a target action which will typically take the form: 
  * function(e) { self.privateAction(); }
  * @summary Add a target action (function) for the control to call
- * @param {function(IDEvent)} aTargetAction The target action (function) to call with this IDEvent.
+ * @method addTargetActionForControlEvents
+ * @param {} aTargetAction
  * @param {number} aControlEvent The control event mask (eg UIControlEventTouchDown)
+ * @return 
  */
 Control.prototype.addTargetActionForControlEvents = function(aTargetAction, aControlEvent)
 {
@@ -74,10 +85,12 @@ Control.prototype.addTargetActionForControlEvents = function(aTargetAction, aCon
 	self.eventTargets()[aControlEvent].push(aTargetAction); // Finally add the target-action.
 };
 
-/** 
+/**
  * Remove the target-action for this control event 
- * @param {function(IDEvent)} aTargetAction The target action (function) in question.
+ * @method removeTargetActionForControlEvents
+ * @param {} aTargetAction
  * @param {number} aControlEvent The control event mask (eg UIControlEventTouchDown)
+ * @return 
  */
 Control.prototype.removeTargetActionForControlEvents = function(aTargetAction, aControlEvent)
 {
@@ -85,9 +98,11 @@ Control.prototype.removeTargetActionForControlEvents = function(aTargetAction, a
 	alert("stub"); // TODO FIXME
 };
 
-/** 
+/**
  * Perform the target-action functions for this control event.
+ * @method sendActionsForControlEvents
  * @param {number} controlEvents The control event mask (eg UIControlEventTouchDown)
+ * @return 
  */
 Control.prototype.sendActionsForControlEvents = function(controlEvents)
 {
@@ -109,8 +124,9 @@ Control.prototype.sendActionsForControlEvents = function(controlEvents)
 
 /**
  * Touch event handler. If the Control wants to respond, it can.
+ * @method didReceiveTouch
  * @param {Event} anEvent The touch Event
- * @return {bool} A boolean indicating whether we handled this event
+ * @return Literal
  */
 Control.prototype.didReceiveTouch = function(anEvent) {
 	var self = this;
@@ -123,12 +139,22 @@ Control.prototype.didReceiveTouch = function(anEvent) {
 
 
 		if (self.touchesMovedWithEvent) {
+			/**
+			 * Description
+			 * @param {} moveEvent
+			 * @return CallExpression
+			 */
 			handleTouchMove = function(moveEvent) {
 				return self.touchesMovedWithEvent(moveEvent);
 			};
 		}
 
 		if (self.touchesEndedWithEvent) {
+			/**
+			 * Description
+			 * @param {} endEvent
+			 * @return CallExpression
+			 */
 			handleTouchEnd = function(endEvent) {
 				element.removeEventListener('touchmove', handleTouchMove, false);
 				element.removeEventListener('touchend', handleTouchEnd, false);
@@ -139,6 +165,11 @@ Control.prototype.didReceiveTouch = function(anEvent) {
 		}
 
 		if (self.touchesCancelledWithEvent) {
+			/**
+			 * Description
+			 * @param {} endEvent
+			 * @return CallExpression
+			 */
 			handleTouchCancel = function(endEvent) {
 				element.removeEventListener('touchmove', handleTouchMove, false);
 				element.removeEventListener('touchend', handleTouchEnd, false);

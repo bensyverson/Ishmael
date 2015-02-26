@@ -5,9 +5,11 @@ var Representable = Representable || require('./ishmael.js');
 
 /**
  * Basic internal event
+ * @constructor
+ * @method IDEvent
  * @param {string} anEventName The name (reverse-domain path) of the event
  * @param {number} controlEvent The control event mask (eg UIControlEventTouchDown)
- * @constructor
+ * @return 
  */
 var IDEvent = function(anEventName, controlEvent ) {
 	Representable.call(this);

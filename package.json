@@ -1,0 +1,27 @@
+{
+  "name": "Ishmael",
+  "version": "0.1.0",
+  "description": "Ishmael is an isomorphic VC library",
+  "main": "ishmael.js",
+  "directories": {
+    "example": "examples"
+  },
+  "scripts": {
+    "test": "test && npm run jsdoctest",
+    "jsdoctest": "mocha --require jsdoctest `find lib src source -name \"*.js\"`"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bensyverson/Ishmael.git"
+  },
+  "author": "Ben Syverson",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/bensyverson/Ishmael/issues"
+  },
+  "homepage": "https://github.com/bensyverson/Ishmael",
+  "devDependencies": {
+    "jsdoctest": "^1.3.1",
+    "mocha": "^2.1.0"
+  }
+}

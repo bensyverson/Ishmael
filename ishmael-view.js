@@ -1,5 +1,11 @@
 "use strict";
 
+/**
+ * Description
+ * @method println
+ * @param {} x
+ * @return 
+ */
 var println = function(x){console.log(x);}
 var PutStuffHere = PutStuffHere || require('./putstuffhere.js');
 
@@ -10,6 +16,11 @@ var Representable = Representable || require('./ishmael.js');
 /**
  * View
  * @constructor
+ * @method View
+ * @param {} templateName
+ * @param {} aName
+ * @param {} cb
+ * @return 
  */
 var View = function(templateName, aName, cb) {
 	// var self = this;
@@ -44,6 +55,11 @@ View.prototype = Object.create(Representable.prototype);
 View.prototype.constructor = View;
 
 
+/**
+ * Description
+ * @method checkTemplate
+ * @return 
+ */
 View.prototype.checkTemplate = function() {
 	var self = this;
 
@@ -59,7 +75,9 @@ View.prototype.checkTemplate = function() {
 
 /**
  * Init
+ * @method init
  * @param {Function} cb A function to call when all subviews have init()'d
+ * @return self
  */
 View.prototype.init = function(cb) {
 	var self = this;
@@ -74,8 +92,10 @@ View.prototype.init = function(cb) {
 
 	self.initStarted = true;
 
-	/* 
+	/**
 	 * Set ourselves as initialized, run the queue, and do our callback.
+	 * @method initDone
+	 * @return 
 	 */
 	var initDone = function() {
 		self.initialized = true;
@@ -88,6 +108,13 @@ View.prototype.init = function(cb) {
 		return;
 	}
 
+	/**
+	 * Description
+	 * @method setTemplate
+	 * @param {} err
+	 * @param {} template
+	 * @return 
+	 */
 	var setTemplate = function(err, template) {
 		if (!err) {
 			self.template = template;
@@ -113,6 +140,12 @@ View.prototype.init = function(cb) {
 };
 
 
+/**
+ * Description
+ * @method autoLayout
+ * @param {} html
+ * @return 
+ */
 View.prototype.autoLayout = function(html) {
 	var self = this;
 	if (self.useAutoLayout !== true) return html;
@@ -126,9 +159,21 @@ View.prototype.autoLayout = function(html) {
 	self.template = func;
 };
 
+/**
+ * Description
+ * @method subview
+ * @param {} selector
+ * @return Literal
+ */
 View.prototype.subview = function(selector) {
 	var self = this;
 
+	/**
+	 * Description
+	 * @method selectByName
+	 * @param {} aName
+	 * @return 
+	 */
 	var selectByName = function(aName) {
 		for (var i = 0; i < self.subviews.length; i++) {
 			var aSubview = self.subviews[i];
@@ -149,6 +194,12 @@ View.prototype.subview = function(selector) {
 	return null;
 };
 
+/**
+ * Description
+ * @method addClass
+ * @param {} className
+ * @return 
+ */
 View.prototype.addClass = function(className){
 	var self = this;
 
@@ -158,6 +209,12 @@ View.prototype.addClass = function(className){
 	self.classes.push(className);
 };
 
+/**
+ * Description
+ * @method removeClass
+ * @param {} className
+ * @return 
+ */
 View.prototype.removeClass = function(className){
 	var self = this;
 
@@ -175,6 +232,11 @@ View.prototype.removeClass = function(className){
 
 
 
+/**
+ * Description
+ * @method element
+ * @return Literal
+ */
 View.prototype.element = function(){
 	var self = this;
 	if (typeof(document) !== typeof(undefined)) {
@@ -187,11 +249,22 @@ View.prototype.element = function(){
 };
 
 
+/**
+ * Description
+ * @method initializeSubviews
+ * @param {} cb
+ * @return 
+ */
 View.prototype.initializeSubviews = function(cb){
 	var self = this;
 
 	if (self.subviews.length > 0) {
 		var i = 0;
+		/**
+		 * Description
+		 * @method nextFunction
+		 * @return 
+		 */
 		var nextFunction = function() {
 			if (i < self.subviews.length) {
 				self.subviews[i++].init(function(){
@@ -207,6 +280,12 @@ View.prototype.initializeSubviews = function(cb){
 	}
 };
 
+/**
+ * Description
+ * @method enqueue
+ * @param {} aFunction
+ * @return self
+ */
 View.prototype.enqueue = function(aFunction){
 	var self = this;
 
@@ -229,9 +308,11 @@ View.prototype.enqueue = function(aFunction){
 
 /**
  * Bind View to an element in the DOM, using routing from the app.
+ * @method bindToAppElement
  * @param {App} anApp The parent app. We need its router to hijack links.
  * @param {Element} anElement The container element in the DOM
  * @param {Function} cb A callback
+ * @return self
  */
 View.prototype.bindToAppElement = function(anApp, anElement, cb) {
 	var self = this;
@@ -251,6 +332,8 @@ View.prototype.bindToAppElement = function(anApp, anElement, cb) {
 
 /**
  * Activate the view in the DOM.
+ * @method activate
+ * @return 
  */
 View.prototype.activate = function() {
 	var self = this;
@@ -264,7 +347,9 @@ View.prototype.activate = function() {
 
 /**
  * Fill locals once update is ready
+ * @method updateLocals
  * @param {Function} cb A callback
+ * @return self
  */
 View.prototype.updateLocals = function(cb) {
 	var self = this;
@@ -277,7 +362,8 @@ View.prototype.updateLocals = function(cb) {
 
 /**
  * Layout subviews
- * @param {Function} cb A callback
+ * @method layoutSubviews
+ * @return self
  */
 View.prototype.layoutSubviews = function() {
 	var self = this;
@@ -294,7 +380,9 @@ View.prototype.layoutSubviews = function() {
 
 /**
  * Update View using routing from the app.
+ * @method update
  * @param {Function} cb A callback
+ * @return self
  */
 View.prototype.update = function(cb) {
 	var self = this;
@@ -336,7 +424,9 @@ View.prototype.update = function(cb) {
 
 /**
  * Add Subview. Not chainable, because init() must come either before or after.
+ * @method addSubview
  * @param {View} aView The View to add
+ * @return 
  */
 View.prototype.addSubview = function(aView) {
 	var self = this;
@@ -347,7 +437,10 @@ View.prototype.addSubview = function(aView) {
 
 /**
  * Insert Subview
+ * @method insertSubviewAtIndex
  * @param {View} aView The View to add
+ * @param {} anIndex
+ * @return 
  */
 View.prototype.insertSubviewAtIndex = function(aView, anIndex) {
 	var self = this;
@@ -357,7 +450,8 @@ View.prototype.insertSubviewAtIndex = function(aView, anIndex) {
 
 /**
  * Remove from superview
- * @param {View} aView The View to add
+ * @method removeFromSuperview
+ * @return 
  */
 View.prototype.removeFromSuperview = function() {
 	var self = this;
@@ -385,6 +479,8 @@ View.prototype.removeFromSuperview = function() {
 
 /**
  * Remove All Subviews.
+ * @method removeAllSubviews
+ * @return self
  */
 View.prototype.removeAllSubviews = function() {
 	var self = this;
@@ -445,12 +541,16 @@ View.prototype._render = function(isBrowser) {
 
 /**
  * Render to HTML asynchronously
+ * @method renderHTML
  * @param {Function} cb A callback
+ * @return self
  */
 View.prototype.renderHTML = function(cb) {
 	var self = this;
 
 	self.enqueue(function() {
+		self.createSubviews();
+
 		self.layoutSubviews({keepElements: true});
 		// Layout if needed. This lets a subclass change its layout (add/remove subviews) based on the locals.
 
@@ -463,7 +563,9 @@ View.prototype.renderHTML = function(cb) {
 
 /**
  * Render current HTML asynchronously
+ * @method renderSnapshot
  * @param {Function} cb A callback
+ * @return self
  */
 View.prototype.renderSnapshot = function(cb) {
 	var self = this;

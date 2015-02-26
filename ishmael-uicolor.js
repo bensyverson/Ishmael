@@ -3,11 +3,13 @@ var Representable = Representable || require('./ishmael.js');
 
 /**
  * UIColor
+ * @constructor
+ * @method UIColor
  * @param {number} red The Red value
  * @param {number} green The Green value
  * @param {number} blue The Blue value
  * @param {number} alpha The Alpha value
- * @constructor
+ * @return 
  */
 var UIColor = function(red, green, blue, alpha)
 {
@@ -20,6 +22,11 @@ var UIColor = function(red, green, blue, alpha)
 	this.registerClass('UIColor');
 };
 
+/**
+ * Description
+ * @method hexString
+ * @return string
+ */
 UIColor.prototype.hexString = function() {
 	var self = this;
 
@@ -36,11 +43,21 @@ UIColor.prototype.hexString = function() {
 };
 
 
+/**
+ * Description
+ * @method rgbString
+ * @return BinaryExpression
+ */
 UIColor.prototype.rgbString = function() {
 	var self = this;
 	return "rgb(" + ((self.red * 255.0)|0) + "," + ((self.green * 255.0)|0)+ "," + ((self.blue * 255.0)|0) + ")";
 };
 
+/**
+ * Description
+ * @method rgbaString
+ * @return BinaryExpression
+ */
 UIColor.prototype.rgbaString = function() {
 	var self = this;
 	return "rgba(" + ((self.red * 255.0)|0) + "," + ((self.green * 255.0)|0)+ "," + ((self.blue * 255.0)|0) + "," + self.alpha.toFixed(3)  + ")";
