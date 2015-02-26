@@ -7,6 +7,10 @@ var Representable = Representable || require('./ishmael.js');
 /**
  * A View Controller
  * @constructor
+ * @method ViewController
+ * @param {} aRoute
+ * @param {} aView
+ * @return 
  */
 var ViewController = function(aRoute, aView) {
 	Representable.call(this);
@@ -32,6 +36,9 @@ ViewController.prototype.constructor = ViewController;
 
 /**
  * Initialize the View Controller
+ * @method init
+ * @param {} cb
+ * @return 
  */
 ViewController.prototype.init = function(cb) {
 	var self = this;
@@ -42,6 +49,8 @@ ViewController.prototype.init = function(cb) {
 
 /**
  * Initialize the View Controller
+ * @method childViewControllers
+ * @return MemberExpression
  */
 ViewController.prototype.childViewControllers = function() {
 	var self = this;
@@ -50,6 +59,9 @@ ViewController.prototype.childViewControllers = function() {
 
 /**
  * Add a new child view controller
+ * @method addChildViewController
+ * @param {} aViewController
+ * @return 
  */
 ViewController.prototype.addChildViewController = function(aViewController) {
 	var self = this;
@@ -80,6 +92,8 @@ ViewController.prototype._removeChildViewController = function(aViewController) 
 
 /**
  * Initialize the View Controller
+ * @method removeFromParentViewController
+ * @return 
  */
 ViewController.prototype.removeFromParentViewController = function() {
 	var self = this;
@@ -90,6 +104,8 @@ ViewController.prototype.removeFromParentViewController = function() {
 
 /**
  * Notification that the VC will move to a new parent VC
+ * @method willMoveToParentViewController
+ * @return 
  */
 ViewController.prototype.willMoveToParentViewController = function() {
 	var self = this;
@@ -98,6 +114,8 @@ ViewController.prototype.willMoveToParentViewController = function() {
 
 /**
  * Notification that the VC moved to a new parent VC
+ * @method didMoveToParentViewController
+ * @return 
  */
 ViewController.prototype.didMoveToParentViewController = function() {
 	var self = this;
@@ -106,6 +124,9 @@ ViewController.prototype.didMoveToParentViewController = function() {
 
 /**
  * Transition from one child VC to another
+ * @method transitionFromViewController
+ * @param {} dict
+ * @return 
  */
 ViewController.prototype.transitionFromViewController = function(dict) {
 	var self = this;
@@ -120,6 +141,9 @@ ViewController.prototype.transitionFromViewController = function(dict) {
 
 /**
  * Create the view hierarchy.
+ * @method loadView
+ * @param {} isAnimated
+ * @return 
  */
 ViewController.prototype.loadView = function(isAnimated) {
 	var self = this;
@@ -127,6 +151,9 @@ ViewController.prototype.loadView = function(isAnimated) {
 
 /**
  * Activate the view hierarchy.
+ * @method viewDidLoad
+ * @param {} isAnimated
+ * @return 
  */
 ViewController.prototype.viewDidLoad = function(isAnimated) {
 	var self = this;
@@ -134,6 +161,9 @@ ViewController.prototype.viewDidLoad = function(isAnimated) {
 
 /**
  * Alert that the view will appear.
+ * @method viewWillAppear
+ * @param {} isAnimated
+ * @return 
  */
 ViewController.prototype.viewWillAppear = function(isAnimated) {
 	var self = this;
@@ -141,6 +171,9 @@ ViewController.prototype.viewWillAppear = function(isAnimated) {
 
 /**
  * Alert that the view did appear.
+ * @method viewDidAppear
+ * @param {} isAnimated
+ * @return 
  */
 ViewController.prototype.viewDidAppear = function(isAnimated) {
 	var self = this;

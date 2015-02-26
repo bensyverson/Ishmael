@@ -1,20 +1,44 @@
 "use strict";
 
+/**
+ * Description
+ * @method println
+ * @param {} x
+ * @return 
+ */
 var println = function(x){console.log(x)};
 
 var Element = Element || function(){};
 
 
+/**
+ * Description
+ * @method hasClassName
+ * @param {} name
+ * @return CallExpression
+ */
 Element.prototype.hasClassName = function(name) {
     return new RegExp("(?:^|\\s+)" + name + "(?:\\s+|$)").test(this.className);
 };
 
+/**
+ * Description
+ * @method addClassName
+ * @param {} name
+ * @return 
+ */
 Element.prototype.addClassName = function(name) {
     if (!this.hasClassName(name)) {
         this.className = this.className ? [this.className, name].join(' ') : name;
     }
 };
 
+/**
+ * Description
+ * @method removeClassName
+ * @param {} name
+ * @return 
+ */
 Element.prototype.removeClassName = function(name) {
     if (this.hasClassName(name)) {
         var c = this.className;
@@ -22,6 +46,12 @@ Element.prototype.removeClassName = function(name) {
     }
 };
 
+/**
+ * Description
+ * @method getNode
+ * @param {} html
+ * @return MemberExpression
+ */
 var getNode = function(html) {
 	var htmlparser = require("htmlparser2");
 	var DomUtils = require("domutils");
@@ -30,10 +60,21 @@ var getNode = function(html) {
 	return dom[0];
 };
 
+/**
+ * Description
+ * @method nodeForHTML
+ * @param {} html
+ * @return CallExpression
+ */
 var nodeForHTML = function(html) {
 	if (typeof(document) !== typeof(undefined)) {
 		var aDiv =  document.createElement('div');
 		aDiv.innerHTML = html;
+		/**
+		 * Description
+		 * @method getInnerHTML
+		 * @return MemberExpression
+		 */
 		aDiv.getInnerHTML = function() {
 			return this.innerHTML;
 		};
@@ -42,6 +83,13 @@ var nodeForHTML = function(html) {
 	return getNode(html);
 };
 
+/**
+ * Description
+ * @method getElementsWithClass
+ * @param {} element
+ * @param {} matchClass
+ * @return matches
+ */
 function getElementsWithClass(element, matchClass) {
 	var re = new RegExp("\\b" + matchClass + "\\b");
 	var matches = [];

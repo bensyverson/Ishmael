@@ -28,10 +28,10 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-// flask stubb starbuck harpoon 
 
+var global = Function('return this')();
 
-if (typeof(require) === typeof(undefined)) window.require = function(){return null;};
+if (typeof(require) === typeof(undefined))  global.require = function(){return null;};
 
 var println = println || function(e) { console.log(e) };
 var nil = null;
@@ -39,27 +39,28 @@ var nil = null;
 var _uuid = require('./autoincrement.js') || Autoincrementer;
 var uuid = uuid || (_uuid ? _uuid.shared : null);
 
-/**
- * Put Stuff Here doesn't know about Ishmael.
- * We'll insert `subviews (unescaped)` so Views can insert subviews.
- */
-// psh().setDefaultHTML("<div>put subviews (unescaped) here</div>");
-
 
 if (typeof sails === typeof(undefined)) {
-	if (typeof(window) !== typeof(undefined)) {
-		window.sails = {};
-	} else if (typeof(global) !== typeof(undefined)) {
-		global.sails = {};
-	}
+	global.sails = {};
 }
 
+/**
+ * Determine if a string has this prefix (case-sensitive)
+ * @param {String} prefix The prefix to check
+ * @returns {Boolean} True if the prefix matches
+ * @examples
+ * "JavaScript".hasPrefix("Java") // => true
+ * "javascript".hasPrefix("Java") // => false
+ */
 String.prototype.hasPrefix = function(prefix) {
 	return this.indexOf(prefix) === 0;
 }
 
 /**
- * 
+ * Lowercase and trim the string to make it easy to search
+ * @returns {String} A search-friendly string
+ * @examples
+ * "   TÉSTing 	".makeSearchFriendly() // => "tésting"
  */
 String.prototype.makeSearchFriendly = function() {
 	return this.replace(/^\s+/, '')
@@ -70,13 +71,22 @@ String.prototype.makeSearchFriendly = function() {
 
 
 /**
- * Representable Object. A fundamental in Ishamel.
+ * Representable Object. The fundamental object in Ishamel.
+ * @class Representable
  * @constructor
+ * @method Representable
+ * @returns {Representable} A new Representable object
  */
 var Representable = function() {
 	var _privateClassName = "Representable";
 	var _privateUniqueId = uuid().generate();
-	// representableObjects[_uniqueId] = this;
+
+	/**
+	 * Get the unique Id of this object (read only)
+	 * @memberOf Representable
+	 * @method uniqueId
+	 * @returns {String} A unique ID
+	 */
 	this.uniqueId = function() {
 		if (this._uniqueId) {
 			_privateUniqueId = this._uniqueId;
@@ -84,6 +94,13 @@ var Representable = function() {
 		}
 		return _privateUniqueId;
 	};
+
+	/**
+	 * Get the class name of this object (read only)
+	 * @method identity
+ 	 * @memberOf Representable
+	 * @returns {String} A class name
+	 */
 	this.identity = function() {
 		if (this._className) {
 			_privateClassName = this._className;
@@ -92,12 +109,44 @@ var Representable = function() {
 		return _privateClassName;
 	};
 
+	/**
+	 * Set the class name for a new Class (call this in the new constructor)
+	 * @method registerClass
+ 	 * @memberOf Representable
+	 * @param {String} aClassName The new class name
+	 * @examples
+	 * var Person = function() {
+	 * 	 Representable.call(this);
+	 *   this.registerClass('Person');
+	 * };
+	 * Person.prototype = Object.create(Representable.prototype);
+	 * Person.prototype.constructor = Person;
+	 * var adrianFrutiger = new Person();
+	 *
+	 * adrianFrutiger.identity() // => "Person"
+	 * adrianFrutiger // instanceof Person
+	 * adrianFrutiger // instanceof Representable
+	 */
 	this.registerClass = function(aClassName) {
 		_privateClassName = aClassName;
 	};
 };
 
 
+/**
+ * The Freeze method serializes a Representable object to JSON, including object references
+ * @memberOf Representable
+ * @method freeze
+ * @returns {String} A JSON representation of this Representable instance.
+ * @examples
+ * var parent = new Representable();
+ * var child = new Representable();
+ * child.parent = parent;
+ * parent.child = child;
+ * 
+ * // JSON.serialize(child) // throws 
+ * child.freeze() // =~ /\{(("_uniqueId":[^,]+,?)|("_className":[^,]+,?)|("parent":\{("_uniqueId":[^,]+,?)|("_className":[^,]+,?)|("child":\{"\$_ish":[^,]+\})\}))+\}/
+ */
 Representable.prototype.freeze = function() {
 	var self = this;
 
@@ -136,7 +185,6 @@ Representable.prototype.freeze = function() {
 				if ((typeof(value['uniqueId']) === 'function') &&
 					(typeof(value['identity']) === 'function')) {
 					var id = value['uniqueId']();
-					// println("UniqueID: " + id);
 					var className = value['identity']();
 					if (typeof (objects[id + '']) !== typeof (undefined)) {
 	// If we've seen the object before, return a reference.
@@ -173,44 +221,70 @@ Representable.prototype.freeze = function() {
 
 
 
-Representable.thaw = function(aJSONString) {
-	// var self = this;
+/**
+ * The Thaw method de-serializes a Representable object from JSON, including object references
+ * @methodOf Representable
+ * @method thaw
+ * @param {String} aJSONString A JSON string generated with @Representable.freeze()
+ * @returns {Representable} The defrosted object
+ * @examples
+ * var Person = function() {
+ * 	 Representable.call(this);
+ *   this.registerClass('Person');
+ * };
+ * Person.prototype = Object.create(Representable.prototype);
+ * Person.prototype.constructor = Person;
+ * 
+ * var Rebel = function() {
+ * 	 Person.call(this);
+ *   this.registerClass('Rebel');
+ * };
+ * Rebel.prototype = Object.create(Person.prototype);
+ * Rebel.prototype.constructor = Rebel;
+ * 
+ * this.Rebel = Rebel; this.Person = Person;
+ * 
+ * var hanSolo = Representable.thaw('{"_uniqueId":5,"_className":"Rebel","name":"Han","hates":{"_uniqueId":6,"_className":"Person","name":"Darth","hates":{"$_ish":5}}}', this);
+ *
+ * var darth = hanSolo.hates;
+ *  
+ * hanSolo // instanceof Representable
+ * hanSolo // instanceof Person
+ * hanSolo // instanceof Rebel
+ * hanSolo.uniqueId() // => 5
+ * hanSolo.identity() // => "Rebel"
+ * darth // instanceof Person
+ * darth.name // => "Darth"
+ * darth.uniqueId() // => 6
+ * darth.identity() // => "Person"
+ * darth.hates // => instanceof Rebel
+ * darth.hates.name // => "Han"
+ * darth.hates.uniqueId() // => 5
+ * (darth.hates === hanSolo) // => true
+ * (hanSolo.hates.hates === hanSolo) // => true
+ */
+Representable.thaw = function(aJSONString, globalObject) {
+	var localGlobal = globalObject || Function('return this')();
+
 
 	var retrocycle = function($) {
-	// Restore an object that was reduced by decycle. Members whose values are
-	// objects of the form
-	//	  {$ref: PATH}
-	// are replaced with references to the value found by the PATH. This will
-	// restore cycles. The object will be mutated.
-
-	// The eval function is used to locate the values described by a PATH. The
-	// root object is kept in a $ variable. A regular expression is used to
-	// assure that the PATH is extremely well formed. The regexp contains nested
-	// * quantifiers. That has been known to have extremely bad performance
-	// problems on some browsers for very long strings. A PATH is expected to be
-	// reasonably short. A PATH is allowed to belong to a very restricted subset of
-	// Goessner's JSONPath.
-
-	// So,
-	//	  var s = '[{"$ref":"$"}]';
-	//	  return JSON.retrocycle(JSON.parse(s));
-	// produces an array containing a single element which is the array itself.
+	// Restore an object that was reduced by decycle. 
 
 
 		var objects = {};   // Keep a reference to each unique object or array
 
 		// Given an item, attempt to revive it from its class.
+
 		var instantiateItem = function(item){
 			if (!item) return null;
 			var ownUniqueId = item['_uniqueId'];
 			var ownClass = item['_className'];
 			if ((typeof(ownUniqueId) === typeof(2) ) &&
 				(typeof(ownClass) === typeof('string') )) {
-
 				if ((typeof(objects[ownUniqueId + '']) === typeof(undefined))	&&
-					(typeof(window[ownClass]) !== typeof(undefined)) 			&&
+					(typeof(localGlobal[ownClass]) !== typeof(undefined)) 			&&
 					(typeof(ownClass) !== typeof(undefined))) {
-					var newObj = new window[ownClass]();
+					var newObj = new localGlobal[ownClass]();
 					for (var key in item) {
 						if (item.hasOwnProperty(key)) {
 							// Don't attempt to replace instance methods.
@@ -227,6 +301,7 @@ Representable.thaw = function(aJSONString) {
 		};
 
 		// Dereference this item if possible
+
 		var derefItem = function(item){
 			var uniqueId = item['$_ish'];
 			if ((typeof(uniqueId) === typeof (2)) &&
@@ -236,7 +311,10 @@ Representable.thaw = function(aJSONString) {
 			return null;
 		};
 
+		// Instantiate the root object using its class
+
 		var cleaned = instantiateItem($);
+
 		(function identifyItems(value) {
 			var i, item, name;
 			if (value && typeof value === 'object') {

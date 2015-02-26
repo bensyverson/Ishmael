@@ -8,7 +8,9 @@ var PutStuffHere = PutStuffHere || require('./putstuffhere.js');
 /**
  * App object
  * @constructor
+ * @method App
  * @param {ViewController} aViewController The root view controller
+ * @return 
  */
 var App = function(aViewController) {
 	Representable.call(this);
@@ -32,6 +34,8 @@ App.prototype.constructor = App;
 
 /**
  * Init
+ * @method init
+ * @return 
  */
 App.prototype.init = function() {
 	var self = this;
@@ -43,6 +47,10 @@ App.prototype.init = function() {
 
 /**
  * Bootstrap, a method called by the browser to get ourselves going from zero.
+ * @method bootstrap
+ * @param {} anId
+ * @param {} cb
+ * @return 
  */
 App.prototype.bootstrap = function(anId, cb) {
 	var self = this;
@@ -66,6 +74,9 @@ App.prototype.bootstrap = function(anId, cb) {
 
 /**
  * Bootstrap, a method called by the browser to get ourselves going from zero.
+ * @method packAndShip
+ * @param {} cb
+ * @return 
  */
 App.prototype.packAndShip = function(cb) {
 	var self = this;
@@ -94,6 +105,9 @@ App.prototype.packAndShip = function(cb) {
  * Mouth to Mouth assumes that the DOM tree already exists.
  * In order to generate the DOM on the server, run the freeze()
  * or packAndShip() method on the app.
+ * @method mouthToMouth
+ * @param {} cb
+ * @return 
  */
 App.prototype.mouthToMouth = function(cb) {
 	var self = this;
@@ -113,6 +127,8 @@ App.prototype.mouthToMouth = function(cb) {
 
 /**
  * Get Root View Controller
+ * @method rootViewController
+ * @return MemberExpression
  */
 App.prototype.rootViewController = function() {
 	var self = this;
@@ -120,8 +136,11 @@ App.prototype.rootViewController = function() {
 };
 
 /**
- *
- */
+  * Description
+  * @method viewControllerForRoute
+  * @param {} aPath
+  * @return Literal
+  */
  App.prototype.viewControllerForRoute = function(aPath) {
  	var self = this;
  	for (var i = 0; i < self.viewControllers.length; i++) {
@@ -136,7 +155,9 @@ App.prototype.rootViewController = function() {
 
 /**
  * Add View Controller
+ * @method addViewController
  * @param {ViewController} aViewController The View Controller
+ * @return 
  */
 App.prototype.addViewController = function(aViewController) {
 	var self = this;

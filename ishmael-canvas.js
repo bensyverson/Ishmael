@@ -1,6 +1,13 @@
 "use strict";
 var Representable = Representable || require('./ishmael.js');
 
+/**
+ * Description
+ * @method RetinaCanvas
+ * @param {} aWidth
+ * @param {} aHeight
+ * @return 
+ */
 var RetinaCanvas = function(aWidth, aHeight) {
 	Representable.call(this);
 	this.canvas = document.createElement('canvas');
@@ -14,6 +21,11 @@ var RetinaCanvas = function(aWidth, aHeight) {
 	this.canvas.style.width = this.width + 'px';
 	this.canvas.style.height = this.height + 'px';
 
+	/**
+	 * Description
+	 * @method backingScale
+	 * @return Literal
+	 */
 	var backingScale = function() {
 		if ('devicePixelRatio' in window) {
 			if (window.devicePixelRatio > 1) {
