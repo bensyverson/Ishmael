@@ -1,22 +1,45 @@
 'use strict';
+/**
+ * @fileOverview A few isomorphic routines for dealing with the DOM
+ * @author <a href="mailto:ben@bensyverson.com">Ben Syverson</a>
+ * @copyright © Copyright 2015 Ben Syverson
+ * @license The MIT License (MIT)
+ */
 var global = Function('return this')();
 if (typeof(require) === typeof(undefined))  global.require = function(){return null;};
-var htmlparser = htmlparser || require("htmlparser2");
+var DomUtils = DomUtils || require('domutils');
 
 /**
- * Native HTML Utilities (use native `document`)
- * @private
- * @class NativeDOMParser
+ * NativeDOMUtils uses `document` when possible, then falls back to DomUtils.
+ * @class NativeDOMUtils
  * @constructor
+ * var utils = new NativeDOMUtils();
+ * var html = '<div id="test"><p></p></div>';
+ * console.log('what');
+ *
+ * typeof(utils.parser.parseHTML) === typeof(undefined) // => true
  */
 var NativeDOMUtils = function() {
-	this.isNative =  (typeof(document) !== typeof(undefined));
+	var NativeHTMLParser = global.NativeHTMLParser || require('./ishmael-htmlparser.js');
+
+	this.isNative = (typeof(document) !== typeof(undefined));
+	this.parser = new NativeHTMLParser();
 };
 
 /**
  * Get the Inner HTML of a DOM element
  * @param {Element} anElement A DOM `Element` or htmlparser2 `Object`
  * @returns {String} The resulting HTML
+ * @exampleHelpers
+ * var utils = new NativeDOMUtils();
+ * var html = '<div id="test"><p></p></div>';
+ * var arr = utils.parser.parseDOM(html);
+ * var el = arr[0];
+ * @examples
+ * var roundtrip = utils.getInnerHTML(el);
+ * 
+ * roundtrip !== null // => true
+ * roundtrip === '<p></p>' // => true
  */
  NativeDOMUtils.prototype.getInnerHTML = function(anElement) {
 	var self = this;
@@ -32,13 +55,18 @@ var NativeDOMUtils = function() {
  * Get the Outer HTML of a DOM element
  * @param {Element} anElement A DOM `Element` or htmlparser2 `Object`
  * @returns {String} The resulting HTML
+ * @examples
+ * var roundtrip = utils.getOuterHTML(el);
+ * 
+ * roundtrip !== null // => true
+ * roundtrip === html // => true
  */
  NativeDOMUtils.prototype.getOuterHTML = function(anElement) {
 	var self = this;
 	if (self.isNative) {
-		return anElement.innerHTML;
+		return anElement.outerHTML;
 	} else {
-		return DomUtils.getInnerHTML(anElement);
+		return DomUtils.getOuterHTML(anElement);
 	}
 	return null;
 };
@@ -48,10 +76,20 @@ var NativeDOMUtils = function() {
  * Append a child to a parent DOM element
  * @param {Element} aParent The parent `Element` or htmlparser2 `Object`
  * @param {Element} anElement Another `Element` or htmlparser2 `Object`
+ * @examples
+ * var arr2 = utils.parser.parseDOM(html);
+ * var el2 = arr2[0];
+ * var child = utils.parser.parseDOM('<q>Child</q>')[0];
+ * utils.appendChild(el2, child);
+ *
+ * child != null // => true
+ * el2.children.length // => 2
  */
  NativeDOMUtils.prototype.appendChild = function(aParent, anElement) {
 	var self = this;
 	if (self.isNative) {
+		console.log(aParent);
+		console.log(anElement);
 		aParent.appendChild(anElement);
 	} else {
 		DomUtils.appendChild(aParent, anElement);
@@ -61,7 +99,13 @@ var NativeDOMUtils = function() {
 /**
  * Get the tag attributes from an element
  * @param {Object} anElement An`Element` or htmlparser2 `Object`
- * @param {Object} A bare `Object` with key => value maps for the attributes
+ * @returns {Object} A bare `Object` with key => value maps for the attributes
+ * @examples
+ * var attribs = utils.getAttribs(el);
+ * 
+ * typeof(attribs) !== typeof(undefined) // => true
+ * attribs !== {} // => true
+ * attribs['id'] === 'test' // => true
  */
  NativeDOMUtils.prototype.getAttribs = function(anElement) {
 	var self = this;

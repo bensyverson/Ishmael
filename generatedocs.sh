@@ -3,7 +3,7 @@
 autodoc --template index.html.mustache ishmael.js
 mv autodoc/index.html autodoc/ishmael.html
 
-autodoc --template index.html.mustache ishmael-domutils.js
+autodoc --template index.html.mustache --javascripts ishmael-htmlparser.js ishmael-domutils.js
 mv autodoc/index.html autodoc/ishmael-domutils.html
 
 autodoc --template index.html.mustache ishmael-htmlparser.js
