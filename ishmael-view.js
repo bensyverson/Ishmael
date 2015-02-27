@@ -7,6 +7,9 @@
  * @return 
  */
 var println = function(x){console.log(x);}
+var global = Function('return this')();
+if (typeof(require) === typeof(undefined))  global.require = function(){return null;};
+
 var PutStuffHere = PutStuffHere || require('./putstuffhere.js');
 
 var OrgStuffHereQueue = OrgStuffHereQueue || require('./queue.js');

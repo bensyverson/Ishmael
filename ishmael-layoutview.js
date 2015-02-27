@@ -1,13 +1,14 @@
 "use strict";
 var println = println || function(x){console.log(x);}
+var global = Function('return this')();
+if (typeof(require) === typeof(undefined))  global.require = function(){return null;};
+
 var View = View || require('./ishmael-view.js');
 
-var htmlparser = htmlparser || require("htmlparser2");
-var DomUtils = DomUtils || require("domutils");
+var NativeHTMLParser = NativeHTMLParser || require("./ishmael-htmlparser.js");
+var NativeDOMUtils = NativeDOMUtils || require("./ishmael-domutils.js");
 
-// var PrivateAutoLayout = function() {
 
-// };
 /**
  * Description
  * @method AutoLayout
@@ -22,6 +23,11 @@ var AutoLayout = function(options) {
 		this.viewRoot = this.viewRoot || options.viewRoot;
 		this.setInstanceVariables = this.setInstanceVariables || options.setInstanceVariables;
 	}
+
+	this.domUtils = new NativeDOMUtils();
+	this.htmlParser = new NativeHTMLParser();
+
+	this.emptyDiv = this.htmlParser.parseDOM('<div />')[0];
 
 	// var _autoLayout = null;
 	// this.shared = function() {
@@ -133,7 +139,6 @@ var trim = function(aString) {
 };
 
 // println(dom);
-var emptyDiv = htmlparser.parseDOM('<div />')[0];
 /**
  * Description
  * @method emptyElement
@@ -266,7 +271,7 @@ AutoLayout.prototype.createViewForImplicitElements = function(parentView, implic
 	var self = this;
 	if (implicitElements.children.length > 0) {
 //		var aView = self.viewFromNode(child, parentView);
-		var html = DomUtils.getInnerHTML(implicitElements);
+		var html = self.domUtils.getInnerHTML(implicitElements);
 
 		if (html.length > 0) {
 			var implicitView = new View();
@@ -275,7 +280,7 @@ AutoLayout.prototype.createViewForImplicitElements = function(parentView, implic
 			implicitView.templateConst = html;
 			parentView.addSubview(implicitView);
 		}
-		implicitElements = emptyElement(emptyDiv);
+		implicitElements = emptyElement(self.emptyDiv);
 	}
 	return implicitElements;
 }
@@ -311,16 +316,16 @@ AutoLayout.prototype.treeForNode = function(parentView, node) {
 				parentView.addSubview(aView);
 
 				var subviewTree = self.treeForNode(aView, child);
-				var html = DomUtils.getInnerHTML(node);
+				var html = self.domUtils.getInnerHTML(node);
 				aView.templateConst = html;
 				aView.templateName = null;
 
 				parentView = aView;
 
-				DomUtils.appendChild(subTree, htmlparser.parseDOM("insert subviews (unescaped) here")[0]);
+				self.domUtils.appendChild(subTree, self.htmlParser.parseDOM("insert subviews (unescaped) here")[0]);
 			} else {
 				// Otherwise, add the tree for the given element.
-				DomUtils.appendChild(subTree, self.treeForNode(parentView, child));
+				self.domUtils.appendChild(subTree, self.treeForNode(parentView, child));
 			}
 		}
 	} else if (childViewCount > 1) {
@@ -330,7 +335,7 @@ AutoLayout.prototype.treeForNode = function(parentView, node) {
 		var first = -1;
 		var last = node.children.length;
 		var childCounts = [];
-		var implicitElements = emptyElement(emptyDiv);
+		var implicitElements = emptyElement(self.emptyDiv);
 		for (var i = 0 ; i < node.children.length; i++) {
 			var subChildCount = numberOfChildrenWithViews(node.children[i]);
 			childCounts[i] = subChildCount; // Cache this.
@@ -349,7 +354,7 @@ AutoLayout.prototype.treeForNode = function(parentView, node) {
 
 			if ((i < first) || (i > last)) {
 				// If we're before or after the subviews, just add this node to the tree normally.
-				DomUtils.appendChild(subTree, child);
+				self.domUtils.appendChild(subTree, child);
 			} else if ((i >= first) && (i <= last)) {
 				// Otherwise, we're a subview *or* between subviews.
 
@@ -357,7 +362,7 @@ AutoLayout.prototype.treeForNode = function(parentView, node) {
 					// In this case, this child node contains a View.
 					if (i == first) {
 						// If we're the first subview, export a single text node to represent all the subviews.
-						DomUtils.appendChild(subTree, htmlparser.parseDOM("insert subviews (unescaped) here")[0]);
+						self.domUtils.appendChild(subTree, self.htmlParser.parseDOM("insert subviews (unescaped) here")[0]);
 					} else {
 						// Important: If we've saved up implicit elements between this view and the last, create an anonymous view to contain them.
 						implicitElements = self.createViewForImplicitElements(parentView, implicitElements, child);
@@ -368,12 +373,12 @@ AutoLayout.prototype.treeForNode = function(parentView, node) {
 					parentView.addSubview(aView);
 
 					var subviewTree = self.treeForNode(aView, child);
-					var html = DomUtils.getOuterHTML(subviewTree);
+					var html = self.domUtils.getOuterHTML(subviewTree);
 					aView.templateConst = html;
 					aView.templateName = null;
 				} else {
 					// This node has no subviews, so we'll collect it in the implicitElements subtree. When the next view gets added, we'll make a container view for all of implicitElements.
-					DomUtils.appendChild(implicitElements, child);
+					self.domUtils.appendChild(implicitElements, child);
 				}
 			}
 		}
@@ -414,18 +419,16 @@ AutoLayout.prototype.autoLayoutViewWithHTML = function(aView, someHtml, normaliz
 		return self;
 	}
 
-	var dom =  htmlparser.parseDOM(trim(someHtml), {normalizeWhitespace: normalizeWhitespace ? true : false});
+	var dom =  self.htmlParser.parseDOM(trim(someHtml), {normalizeWhitespace: normalizeWhitespace ? true : false});
 
 	var first = firstChildWithView(dom[0]);
 	if (first !== null) {
 		var tree = self.treeForNode(aView, dom[0]);
-		aView.templateConst = DomUtils.getOuterHTML(tree);
+		aView.templateConst = self.domUtils.getOuterHTML(tree);
 		aView.templateName = null;
 	}
 	return self;
 };
 
-
 module.exports = AutoLayout;
-
 

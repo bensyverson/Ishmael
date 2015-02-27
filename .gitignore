@@ -1,9 +1,10 @@
 .DS_Store
-<<<<<<< HEAD
 autodoc/
 annotated/
-=======
-annotated
 
-autodoc/ishmael.js
->>>>>>> origin/master
+putstuffhere.js
+
+queue.js
+
+uuid.js
+node_modules
