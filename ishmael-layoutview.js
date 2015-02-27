@@ -79,30 +79,7 @@ AutoLayout.prototype.printSubviews = function(v) {
 	innerPrintSubviews(v);
 };
 
-/**
- * Description
- * @method firstChildWithView
- * @param {} node
- * @returns Literal
- */
-var firstChildWithView = function(node) {
-	if (node.attribs && node.attribs['data-ish-class']) {
-		return node;
-	}
 
-	if (node.children) {
-		for (var i= 0; i < node.children.length; i++) {
-			if (node.children[i].attribs) {
-				if (node.children[i].attribs['data-ish-class']) {
-					return node.children[i];
-				}
-			}
-			var first = firstChildWithView(node.children[i]);
-			if (first !== null) return first;
-		}
-	}
-	return null;
-};
 
 var indent = '';
 
@@ -121,25 +98,7 @@ var trim = function(aString) {
 
 
 
-/**
- * Description
- * @method numberOfChildrenWithViews
- * @param {} node
- * @returns viewCount
- */
-var numberOfChildrenWithViews = function(node) {
-	// How many of my direct children have views?
-	if (nodeIsView(node)) return 1;
-	var viewCount = 0;
-	if (node.children) {
-		for (var i= 0; i < node.children.length; i++) {
-			var child = node.children[i];
-			var aNode = firstChildWithView(child);
-			if (aNode !== null) viewCount++;
-		}
-	}
-	return viewCount;
-};
+
 
 
 
@@ -149,8 +108,10 @@ var numberOfChildrenWithViews = function(node) {
  * @param {} node
  * @returns LogicalExpression
  */
-var nodeIsView = function(node) {
-	return (node.attribs && node.attribs['data-ish-class']);
+AutoLayout.prototype.nodeIsView = function(node) {
+	var self = this;
+	var attribs = self.domUtils.getAttribs(node);
+	return (attribs && attribs['data-ish-class']);
 }
 
 /**
@@ -159,15 +120,66 @@ var nodeIsView = function(node) {
  * @param {} node
  * @returns ObjectExpression
  */
-var attribsFromView = function(node){
-	var containerClass = node.attribs ? node.attribs['data-ish-class'] : null;
-	var containerName = node.attribs ? node.attribs['data-ish-name'] : null;
+AutoLayout.prototype.attribsFromView = function(node){
+	var self = this;
+	var attribs = self.domUtils.getAttribs(node);
+	var containerClass = attribs ? attribs['data-ish-class'] : null;
+	var containerName = attribs ? attribs['data-ish-name'] : null;
 	return {
 		className: containerClass,
 		name: containerName,
 	}
 }
 
+
+/**
+ * Description
+ * @method numberOfChildrenWithViews
+ * @param {} node
+ * @returns viewCount
+ */
+AutoLayout.prototype.numberOfChildrenWithViews = function(node) {
+	var self = this;
+	// How many of my direct children have views?
+	if (self.nodeIsView(node)) return 1;
+	var viewCount = 0;
+	if (node.children) {
+		for (var i= 0; i < node.children.length; i++) {
+			var child = node.children[i];
+			var aNode = self.firstChildWithView(child);
+			if (aNode !== null) viewCount++;
+		}
+	}
+	return viewCount;
+};
+
+/**
+ * Description
+ * @method firstChildWithView
+ * @param {} node
+ * @returns Literal
+ */
+AutoLayout.prototype.firstChildWithView = function(node) {
+	var self = this;
+	var attribs = self.domUtils.getAttribs(node);
+	if (attribs && attribs['data-ish-class']) {
+		return node;
+	}
+
+	if (node.children) {
+		for (var i= 0; i < node.children.length; i++) {
+			var childAttribs = self.domUtils.getAttribs(node.children[i]);
+			if (childAttribs) {
+				if (childAttribs['data-ish-class']) {
+					return node.children[i];
+				}
+			}
+			var first = self.firstChildWithView(node.children[i]);
+			if (first !== null) return first;
+		}
+	}
+	return null;
+};
 /**
  * Description
  * @method viewFromNode
@@ -177,7 +189,7 @@ var attribsFromView = function(node){
  */
 AutoLayout.prototype.viewFromNode = function(node, parentView) {
 	var self = this;
-	var attribs = attribsFromView(node);
+	var attribs = self.attribsFromView(node);
 	var className = attribs['className'];
 	var instanceName = attribs['name'];
 	var aView = null;
@@ -277,13 +289,13 @@ AutoLayout.prototype.treeForNode = function(parentView, node) {
 		return node;
 	}
 
-	var childViewCount = numberOfChildrenWithViews(node);
+	var childViewCount = self.numberOfChildrenWithViews(node);
 
 	if (childViewCount == 1) {
 		// If only one of our children contains a view, then iterate through the elements.
 		for (var i = 0 ; i < node.children.length; i++) {
 			var child = node.children[i];
-			if (nodeIsView(child)) {
+			if (self.nodeIsView(child)) {
 				// If we find a direct view, add it immediately.
 				var aView = self.viewFromNode(child, parentView);
 				parentView.addSubview(aView);
@@ -310,7 +322,7 @@ AutoLayout.prototype.treeForNode = function(parentView, node) {
 		var childCounts = [];
 		var implicitElements = self.domUtils.emptyElement(self.emptyDiv);
 		for (var i = 0 ; i < node.children.length; i++) {
-			var subChildCount = numberOfChildrenWithViews(node.children[i]);
+			var subChildCount = self.numberOfChildrenWithViews(node.children[i]);
 			childCounts[i] = subChildCount; // Cache this.
 			if (subChildCount > 0) {
 				if (first < 0) {
@@ -427,6 +439,7 @@ AutoLayout.prototype.treeForNode = function(parentView, node) {
  *
  * view1 !== null // => true
  * view1 // instanceof View
+ * console.log(view1) // => true
  * view1.subviews.length // => 4
  * view2 !== null // => true
  * view2 // instanceof View
@@ -457,7 +470,7 @@ AutoLayout.prototype.autoLayoutViewWithHTML = function(aView, someHtml, normaliz
 
 	var dom =  self.domUtils.parseDOM(trim(someHtml), {normalizeWhitespace: normalizeWhitespace ? true : false});
 
-	var first = firstChildWithView(dom[0]);
+	var first = self.firstChildWithView(dom[0]);
 	if (first !== null) {
 		var tree = self.treeForNode(aView, dom[0]);
 		aView.templateConst = self.domUtils.getOuterHTML(tree);
