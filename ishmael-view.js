@@ -4,7 +4,7 @@
  * Description
  * @method println
  * @param {} x
- * @return 
+ * @returns 
  */
 var println = function(x){console.log(x);}
 var global = Function('return this')();
@@ -23,7 +23,7 @@ var Representable = Representable || require('./ishmael.js');
  * @param {} templateName
  * @param {} aName
  * @param {} cb
- * @return 
+ * @returns 
  */
 var View = function(templateName, aName, cb) {
 	// var self = this;
@@ -61,7 +61,7 @@ View.prototype.constructor = View;
 /**
  * Description
  * @method checkTemplate
- * @return 
+ * @returns 
  */
 View.prototype.checkTemplate = function() {
 	var self = this;
@@ -80,7 +80,7 @@ View.prototype.checkTemplate = function() {
  * Init
  * @method init
  * @param {Function} cb A function to call when all subviews have init()'d
- * @return self
+ * @returns self
  */
 View.prototype.init = function(cb) {
 	var self = this;
@@ -98,7 +98,7 @@ View.prototype.init = function(cb) {
 	/**
 	 * Set ourselves as initialized, run the queue, and do our callback.
 	 * @method initDone
-	 * @return 
+	 * @returns 
 	 */
 	var initDone = function() {
 		self.initialized = true;
@@ -116,7 +116,7 @@ View.prototype.init = function(cb) {
 	 * @method setTemplate
 	 * @param {} err
 	 * @param {} template
-	 * @return 
+	 * @returns 
 	 */
 	var setTemplate = function(err, template) {
 		if (!err) {
@@ -147,7 +147,7 @@ View.prototype.init = function(cb) {
  * Description
  * @method autoLayout
  * @param {} html
- * @return 
+ * @returns 
  */
 View.prototype.autoLayout = function(html) {
 	var self = this;
@@ -166,7 +166,7 @@ View.prototype.autoLayout = function(html) {
  * Description
  * @method subview
  * @param {} selector
- * @return Literal
+ * @returns Literal
  */
 View.prototype.subview = function(selector) {
 	var self = this;
@@ -175,7 +175,7 @@ View.prototype.subview = function(selector) {
 	 * Description
 	 * @method selectByName
 	 * @param {} aName
-	 * @return 
+	 * @returns 
 	 */
 	var selectByName = function(aName) {
 		for (var i = 0; i < self.subviews.length; i++) {
@@ -201,7 +201,7 @@ View.prototype.subview = function(selector) {
  * Description
  * @method addClass
  * @param {} className
- * @return 
+ * @returns 
  */
 View.prototype.addClass = function(className){
 	var self = this;
@@ -216,7 +216,7 @@ View.prototype.addClass = function(className){
  * Description
  * @method removeClass
  * @param {} className
- * @return 
+ * @returns 
  */
 View.prototype.removeClass = function(className){
 	var self = this;
@@ -238,7 +238,7 @@ View.prototype.removeClass = function(className){
 /**
  * Description
  * @method element
- * @return Literal
+ * @returns Literal
  */
 View.prototype.element = function(){
 	var self = this;
@@ -256,7 +256,7 @@ View.prototype.element = function(){
  * Description
  * @method initializeSubviews
  * @param {} cb
- * @return 
+ * @returns 
  */
 View.prototype.initializeSubviews = function(cb){
 	var self = this;
@@ -266,7 +266,7 @@ View.prototype.initializeSubviews = function(cb){
 		/**
 		 * Description
 		 * @method nextFunction
-		 * @return 
+		 * @returns 
 		 */
 		var nextFunction = function() {
 			if (i < self.subviews.length) {
@@ -287,7 +287,7 @@ View.prototype.initializeSubviews = function(cb){
  * Description
  * @method enqueue
  * @param {} aFunction
- * @return self
+ * @returns self
  */
 View.prototype.enqueue = function(aFunction){
 	var self = this;
@@ -315,7 +315,7 @@ View.prototype.enqueue = function(aFunction){
  * @param {App} anApp The parent app. We need its router to hijack links.
  * @param {Element} anElement The container element in the DOM
  * @param {Function} cb A callback
- * @return self
+ * @returns self
  */
 View.prototype.bindToAppElement = function(anApp, anElement, cb) {
 	var self = this;
@@ -336,7 +336,7 @@ View.prototype.bindToAppElement = function(anApp, anElement, cb) {
 /**
  * Activate the view in the DOM.
  * @method activate
- * @return 
+ * @returns 
  */
 View.prototype.activate = function() {
 	var self = this;
@@ -352,7 +352,7 @@ View.prototype.activate = function() {
  * Fill locals once update is ready
  * @method updateLocals
  * @param {Function} cb A callback
- * @return self
+ * @returns self
  */
 View.prototype.updateLocals = function(cb) {
 	var self = this;
@@ -366,7 +366,7 @@ View.prototype.updateLocals = function(cb) {
 /**
  * Layout subviews
  * @method layoutSubviews
- * @return self
+ * @returns self
  */
 View.prototype.layoutSubviews = function() {
 	var self = this;
@@ -385,7 +385,7 @@ View.prototype.layoutSubviews = function() {
  * Update View using routing from the app.
  * @method update
  * @param {Function} cb A callback
- * @return self
+ * @returns self
  */
 View.prototype.update = function(cb) {
 	var self = this;
@@ -429,7 +429,7 @@ View.prototype.update = function(cb) {
  * Add Subview. Not chainable, because init() must come either before or after.
  * @method addSubview
  * @param {View} aView The View to add
- * @return 
+ * @returns 
  */
 View.prototype.addSubview = function(aView) {
 	var self = this;
@@ -443,7 +443,7 @@ View.prototype.addSubview = function(aView) {
  * @method insertSubviewAtIndex
  * @param {View} aView The View to add
  * @param {} anIndex
- * @return 
+ * @returns 
  */
 View.prototype.insertSubviewAtIndex = function(aView, anIndex) {
 	var self = this;
@@ -454,7 +454,7 @@ View.prototype.insertSubviewAtIndex = function(aView, anIndex) {
 /**
  * Remove from superview
  * @method removeFromSuperview
- * @return 
+ * @returns 
  */
 View.prototype.removeFromSuperview = function() {
 	var self = this;
@@ -483,7 +483,7 @@ View.prototype.removeFromSuperview = function() {
 /**
  * Remove All Subviews.
  * @method removeAllSubviews
- * @return self
+ * @returns self
  */
 View.prototype.removeAllSubviews = function() {
 	var self = this;
@@ -546,7 +546,7 @@ View.prototype._render = function(isBrowser) {
  * Render to HTML asynchronously
  * @method renderHTML
  * @param {Function} cb A callback
- * @return self
+ * @returns self
  */
 View.prototype.renderHTML = function(cb) {
 	var self = this;
@@ -568,7 +568,7 @@ View.prototype.renderHTML = function(cb) {
  * Render current HTML asynchronously
  * @method renderSnapshot
  * @param {Function} cb A callback
- * @return self
+ * @returns self
  */
 View.prototype.renderSnapshot = function(cb) {
 	var self = this;
