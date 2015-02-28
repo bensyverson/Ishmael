@@ -111,9 +111,9 @@ NativeDOMUtils.prototype.parseDOM = function(aString, options) {
  */
  NativeDOMUtils.prototype.appendChild = function(aParent, anElement) {
 	var self = this;
+	if (!aParent) return;
+	if (!anElement) return;
 	if (self.isNative) {
-		console.log(aParent);
-		console.log(anElement);
 		aParent.appendChild(anElement);
 	} else {
 		DomUtils.appendChild(aParent, anElement);

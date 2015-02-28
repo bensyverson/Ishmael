@@ -6,12 +6,77 @@ if (typeof(require) === typeof(undefined))  global.require = function(){return n
 var View = View || require('./ishmael-view.js');
 var NativeDOMUtils = NativeDOMUtils || require("./ishmael-domutils.js");
 
+if (!String.prototype.trim) {
+  (function() {
+    // Make sure we trim BOM and NBSP
+    var rtrim = /^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g;
+    String.prototype.trim = function() {
+      return this.replace(rtrim, '');
+    };
+  })();
+}
+
 /**
  * Description
  * @method AutoLayout
- * @param {} options
+ * @param {Object=} options Configuration options
  * @exampleHelpers
- *
+ *	var snippet1 = '<div id="word"> 									\
+ *		<ul>															\
+ *			<li>														\
+ *				test													\
+ *			</li>														\
+ *		</ul>															\
+ *		<div>															\
+ *			<p data-ish-class="InfoView" data-ish-name="infoView">		\
+ *				put info here											\
+ *			</p>														\
+ *		</div>															\
+ *		<article>														\
+ *			<p data-ish-class="InfoView" data-ish-name="article">		\
+ *				put article here										\
+ *			</p>														\
+ *		</article>														\
+ *		<p>interstitial</p>												\
+ *		<footer>														\
+ *			<div>														\
+ *				<p data-ish-class="WordView" data-ish-name="footer">	\
+ *					put footer here										\
+ *				</p>													\
+ *			</div>														\
+ *		</footer>														\
+ *		<p>																\
+ *			&copy; Copyright 2015 Ben Syverson							\
+ *		</p>															\
+ *	</div>';
+ * 
+ *	var snippet2 = '<div id="word" data-ish-class="WordView"> 			\
+ *		<ul>															\
+ *			<li>														\
+ *				test													\
+ *			</li>														\
+ *		</ul>															\
+ *		<header>														\
+ *			<article>													\
+ *				<p data-ish-class="InfoView" data-ish-name="graphic">	\
+ *					<svg data-ish-class="GraphicView" data-ish-name="illustration"> \
+ *						put infographic here							\
+ *					</svg>												\
+ *				</p>													\
+ *				<div>													\
+ *					<div>												\
+ *						<p data-ish-class="InfoView" data-ish-name="article">	\
+ *							put article here							\
+ *						</p>											\
+ *					</div>												\
+ *				</div>													\
+ *			</article>													\
+ *		</header>														\
+ *		<p>																\
+ *			&copy; Copyright 2015 Ben Syverson							\
+ *		</p>															\
+ *	</div>';
+
  * var al = new AutoLayout();
  * var View = function(templateName, aName, cb) {
  * 	 var self = this;
@@ -43,8 +108,6 @@ var NativeDOMUtils = NativeDOMUtils || require("./ishmael-domutils.js");
  * GraphicView.prototype.constructor = GraphicView;
  * this.GraphicView = GraphicView;
  * al.context = this;
- * var newView = new View();
- * 
  * 
  * @examples
  * al.domUtils.getOuterHTML(al.emptyDiv) // => '<div></div>'
@@ -59,8 +122,9 @@ var AutoLayout = function(options) {
 	}
 
 	this.domUtils = new NativeDOMUtils();
+	println(this.domUtils);
 
-	this.emptyDiv = this.domUtils.parseDOM('<div />')[0];
+	this.emptyDiv = this.domUtils.parseDOM('<div />', {normalizeWhitespace: true})[0];
 
 	this.context = Function('return this')();
 };
@@ -83,48 +147,45 @@ AutoLayout.prototype.printSubviews = function(v) {
 
 var indent = '';
 
-/**
- * Description
- * @method trim
- * @param {} aString
- * @returns CallExpression
- */
-var trim = function(aString) {
-	return aString
-			.replace(/^\s+/, '')
-			.replace(/\s+$/, '');
-
-};
-
-
-
-
-
-
 
 /**
- * Description
+ * Determine if this `Element` or htmlparser2 `Object` has the `data-ish-class` attribute marking it as a View
  * @method nodeIsView
- * @param {} node
- * @returns LogicalExpression
+ * @param {(Element|Object)} node An `Element` or htmlparser2 `Object`
+ * @returns {boolean} True if the node itself is a view.
+ * @examples
+ * var nodeWithView = al.domUtils.parseDOM('<div data-ish-class="TestView"></div>', {normalizeWhitespace: true})[0];
+ * var nodeWithoutView = al.domUtils.parseDOM('<div data-ish-name="test"></div>', {normalizeWhitespace: true})[0];
+ * var bareNode = al.domUtils.parseDOM('<p id="test"></p>', {normalizeWhitespace: true})[0];
+ *
+ * al.nodeIsView(nodeWithView) // => true
+ * al.nodeIsView(nodeWithoutView) // => false
+ * al.nodeIsView(bareNode) // => false
  */
 AutoLayout.prototype.nodeIsView = function(node) {
 	var self = this;
 	var attribs = self.domUtils.getAttribs(node);
-	return (attribs && attribs['data-ish-class']);
+	return (typeof(attribs) !== typeof(undefined))
+			&& (attribs !== {})
+			&& (typeof(attribs['data-ish-class']) !== typeof(undefined));
 }
 
 /**
  * Description
  * @method attribsFromView
- * @param {} node
- * @returns ObjectExpression
+ * @param {(Element|Object)} node An `Element` or htmlparser2 `Object`
+ * @returns {Object} An object dictionary with the className and name 
+ * @examples
+ * var nodeWithView = al.domUtils.parseDOM('<div data-ish-class="TestView" data-ish-name="Example"></div>', {normalizeWhitespace: true})[0];
+ *
+ * al.attribsFromView(nodeWithView) // => {"className": "TestView", "name": "Example"}
+ * al.attribsFromView(al.emptyDiv) // => {"className": null, "name": null}
  */
 AutoLayout.prototype.attribsFromView = function(node){
 	var self = this;
 	var attribs = self.domUtils.getAttribs(node);
-	var containerClass = attribs ? attribs['data-ish-class'] : null;
-	var containerName = attribs ? attribs['data-ish-name'] : null;
+	var containerClass = (attribs && attribs['data-ish-class']) ? attribs['data-ish-class'] : null;
+	var containerName = (attribs && attribs['data-ish-name']) ? attribs['data-ish-name'] : null;
 	return {
 		className: containerClass,
 		name: containerName,
@@ -133,10 +194,16 @@ AutoLayout.prototype.attribsFromView = function(node){
 
 
 /**
- * Description
+ * Get the number of an node's `.children` which contain Views
  * @method numberOfChildrenWithViews
- * @param {} node
- * @returns viewCount
+ * @param {(Element|Object)} node An `Element` or htmlparser2 `Object`
+ * @returns {Number} The number of direct children which contain Views
+ * @examples
+ * var view1Node = al.domUtils.parseDOM(snippet1, {normalizeWhitespace: true})[0];
+ * var view2Node = al.domUtils.parseDOM(snippet2, {normalizeWhitespace: true})[0];
+ *
+ * al.numberOfChildrenWithViews(view1Node) // => 3
+ * al.numberOfChildrenWithViews(view2Node) // => 1
  */
 AutoLayout.prototype.numberOfChildrenWithViews = function(node) {
 	var self = this;
@@ -156,8 +223,14 @@ AutoLayout.prototype.numberOfChildrenWithViews = function(node) {
 /**
  * Description
  * @method firstChildWithView
- * @param {} node
- * @returns Literal
+ * @param {(Element|Object)} node
+ * @returns {(Element|Object|null)} The first child which contains a View, or `null`
+ * @examples
+ * var view1Node = al.domUtils.parseDOM(snippet1, {normalizeWhitespace: true})[0];
+ * var firstChild = al.firstChildWithView(view1Node);
+ * var firstHTML = al.domUtils.getOuterHTML(firstChild);
+ * 
+ * firstHTML // =~ /<p data-ish-class="InfoView" data-ish-name="infoView">\s*put info here\s*<\/p>/
  */
 AutoLayout.prototype.firstChildWithView = function(node) {
 	var self = this;
@@ -183,9 +256,9 @@ AutoLayout.prototype.firstChildWithView = function(node) {
 /**
  * Description
  * @method viewFromNode
- * @param {} node
- * @param {} parentView
- * @returns aView
+ * @param {(Element|Object)} node
+ * @param {View} parentView
+ * @returns {View} A new View
  */
 AutoLayout.prototype.viewFromNode = function(node, parentView) {
 	var self = this;
@@ -198,15 +271,10 @@ AutoLayout.prototype.viewFromNode = function(node, parentView) {
 			var ctx = self.context;
 			if (ctx) {
 				if (typeof(ctx[className]) !== typeof(undefined)) {
-						println("FOUND '" + className + "'");
 //					if (ctx[className] instanceof View) {
 						aView = new ctx[className](null, attribs.name);
 //					}
-				}  else {
-					println("Couldn't find '" + className + "'");
 				}
-			}  else {
-				println("NO CONTEXT");
 			}
 			if (aView == null) {
 				try {
@@ -247,16 +315,15 @@ AutoLayout.prototype.viewFromNode = function(node, parentView) {
 /**
  * Description
  * @method createViewForImplicitElements
- * @param {} parentView
- * @param {} implicitElements
- * @param {} child
- * @returns implicitElements
+ * @param {View} parentView
+ * @param {(Element|Object)} implicitElements
+ * @returns {(Element|Object)} implicitElements
  */
-AutoLayout.prototype.createViewForImplicitElements = function(parentView, implicitElements, child) {
+AutoLayout.prototype.createViewForImplicitElements = function(parentView, implicitElements) {
 	var self = this;
 	if (implicitElements.children.length > 0) {
 //		var aView = self.viewFromNode(child, parentView);
-		var html = trim(self.domUtils.getInnerHTML(implicitElements));
+		var html = self.domUtils.getInnerHTML(implicitElements).trim();
 
 		if (html.length > 0) {
 			var implicitView = new self.context['View']();
@@ -273,9 +340,9 @@ AutoLayout.prototype.createViewForImplicitElements = function(parentView, implic
 /**
  * Description
  * @method treeForNode
- * @param {} parentView
- * @param {} node
- * @returns subTree
+ * @param {View} parentView
+ * @param {(Element|Object)} node
+ * @returns {(Element|Object)} subTree
  */
 AutoLayout.prototype.treeForNode = function(parentView, node) {
 	var self = this;
@@ -301,7 +368,7 @@ AutoLayout.prototype.treeForNode = function(parentView, node) {
 				parentView.addSubview(aView);
 
 				var subviewTree = self.treeForNode(aView, child);
-				var html = self.domUtils.getInnerHTML(node);
+				var html = self.domUtils.getInnerHTML(node).trim();
 				aView.templateConst = html;
 				aView.templateName = null;
 
@@ -376,70 +443,15 @@ AutoLayout.prototype.treeForNode = function(parentView, node) {
 /**
  * Description
  * @param {String} someHtml The HTML to parse
- * @param {boolean} normalizeWhitespace If `true`, all whitespace will be collapsed to a single space.
+ * @param {boolean=} normalizeWhitespace If `true`, all whitespace will be collapsed to a single space.
  * @returns {View} The view
  * @examples
- *	var snippet1 = '<div id="word"> 									\
- *		<ul>															\
- *			<li>														\
- *				test													\
- *			</li>														\
- *		</ul>															\
- *		<div>															\
- *			<p data-ish-class="InfoView" data-ish-name="infoView">		\
- *				put info here											\
- *			</p>														\
- *		</div>															\
- *		<article>														\
- *			<p data-ish-class="InfoView" data-ish-name="article">		\
- *				put article here										\
- *			</p>														\
- *		</article>														\
- *		<p>interstitial</p>												\
- *		<footer>														\
- *			<div>														\
- *				<p data-ish-class="WordView" data-ish-name="footer">	\
- *					put footer here										\
- *				</p>													\
- *			</div>														\
- *		</footer>														\
- *		<p>																\
- *			&copy; Copyright 2015 Ben Syverson							\
- *		</p>															\
- *	</div>';
- * 
- *	var snippet2 = '<div id="word" data-ish-class="WordView"> 			\
- *		<ul>															\
- *			<li>														\
- *				test													\
- *			</li>														\
- *		</ul>															\
- *		<header>														\
- *			<article>													\
- *				<p data-ish-class="InfoView" data-ish-name="graphic">	\
- *					<svg data-ish-class="GraphicView" data-ish-name="illustration"> \
- *						put infographic here							\
- *					</svg>												\
- *				</p>													\
- *				<div>													\
- *					<div>												\
- *						<p data-ish-class="InfoView" data-ish-name="article">	\
- *							put article here							\
- *						</p>											\
- *					</div>												\
- *				</div>													\
- *			</article>													\
- *		</header>														\
- *		<p>																\
- *			&copy; Copyright 2015 Ben Syverson							\
- *		</p>															\
- *	</div>';
  * var view1 = al.viewForHTML(snippet1, true);
  * var view2 = al.viewForHTML(snippet2, true);
  *
  * view1 !== null // => true
  * view1 // instanceof View
- * console.log(view1) // => true
+ * console.log(view1.subviews) // => undefined
  * view1.subviews.length // => 4
  * view2 !== null // => true
  * view2 // instanceof View
@@ -457,10 +469,10 @@ AutoLayout.prototype.viewForHTML = function(someHtml, normalizeWhitespace) {
 /**
  * Description
  * @method autoLayoutViewWithHTML
- * @param {} aView
- * @param {} someHtml
- * @param {} normalizeWhitespace
- * @returns self
+ * @param {View} aView
+ * @param {String} someHtml
+ * @param {boolean=} normalizeWhitespace
+ * @returns {AutoLayout} Self
  */
 AutoLayout.prototype.autoLayoutViewWithHTML = function(aView, someHtml, normalizeWhitespace) {
 	var self = this;
@@ -468,7 +480,7 @@ AutoLayout.prototype.autoLayoutViewWithHTML = function(aView, someHtml, normaliz
 		return self;
 	}
 
-	var dom =  self.domUtils.parseDOM(trim(someHtml), {normalizeWhitespace: normalizeWhitespace ? true : false});
+	var dom =  self.domUtils.parseDOM(someHtml.trim(), {normalizeWhitespace: normalizeWhitespace ? true : false});
 
 	var first = self.firstChildWithView(dom[0]);
 	if (first !== null) {
@@ -536,9 +548,9 @@ this.View = View;
  al.context = this;
  var newView = new View();
  
- var view1 = al.viewForHTML(snippet1, true);
- println("-------------")
- println(view1);
+ // var view1 = al.viewForHTML(snippet1, true);
+ // println("-------------")
+ // println(view1);
 
 module.exports = AutoLayout;
 
