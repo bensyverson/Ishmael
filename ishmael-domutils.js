@@ -25,7 +25,7 @@ var NativeDOMUtils = function() {
  * @returns {Array} An array of htmlparser2 `Object`s or native DOM `Element` objects 
  * @exampleHelpers
  * var utils = new NativeDOMUtils();
- * var html = '<div id="test"><p></p></div>';
+ * var html = '<div id="test"><p>Testing</p></div>';
  * var arr = utils.parseDOM(html);
  * var el = arr[0];
  * @examples
@@ -109,16 +109,38 @@ NativeDOMUtils.prototype.parseDOM = function(aString, options) {
  * child != null // => true
  * el2.children.length // => 2
  */
- NativeDOMUtils.prototype.appendChild = function(aParent, anElement) {
+NativeDOMUtils.prototype.appendChild = function(aParent, anElement) {
 	var self = this;
 	if (!aParent) return;
 	if (!anElement) return;
 	if (self.isNative) {
-		aParent.appendChild(anElement);
+		var dupe = anElement.cloneNode(true);
+		aParent.appendChild(dupe);
 	} else {
 		DomUtils.appendChild(aParent, anElement);
 	}
 };
+
+/**
+ * Return a list of child nodes of the `Element` or `Object`
+ * @param {(Element|Object)} aParent The parent `Element` or htmlparser2 `Object`
+ * @returns {[(Element|Object)]} An array of `Element` or htmlparser2 `Object`s
+ * @examples
+ * var node = utils.parseDOM('<div><p></p><p></p></div>')[0];
+ * var node2 = utils.parseDOM(html)[0];
+ *
+ * utils.childNodes(node).length // => 2
+ * utils.childNodes(node2).length // => 1
+ */
+NativeDOMUtils.prototype.childNodes = function(node) {
+	var self = this;
+	if (self.isNative) {
+		return node.childNodes;
+	} else {
+		return node.children;
+	}
+	return [];
+}
 
 /**
  * Description
@@ -129,7 +151,7 @@ NativeDOMUtils.prototype.parseDOM = function(aString, options) {
 NativeDOMUtils.prototype.emptyElement = function(node) {
 	var self = this;
 	if (self.isNative) {
-		var dupe = node.cloneNode();
+		var dupe = node.cloneNode(false);
 		while (dupe.firstChild) {
 		    dupe.removeChild(dupe.firstChild);
 		}
@@ -159,7 +181,8 @@ NativeDOMUtils.prototype.emptyElement = function(node) {
  NativeDOMUtils.prototype.getAttribs = function(anElement) {
 	var self = this;
 	if (self.isNative) {
-		if (anElement.hasAttributes()) {
+		if ((typeof(anElement.hasAttributes) !== typeof(undefined)) &&
+			 anElement.hasAttributes()) {
 			var attrs = anElement.attributes;
 			var obj = {};
 			for (var i = 0; i < attrs.length; i++) {

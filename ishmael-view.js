@@ -126,7 +126,6 @@ View.prototype.init = function(cb) {
 	};
 	if (self.templateName) {
 		if (self.useAutoLayout) {
-			println("Getting autolayout template. " + self.templateName);
 			PutStuffHere.shared().getHTML(self.templateName, function(err, html){
 				self.autoLayout(html);
 				initDone();
