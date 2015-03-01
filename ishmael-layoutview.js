@@ -56,14 +56,19 @@ if (!String.prototype.trim) {
  *				test													\
  *			</li>														\
  *		</ul>															\
- *		<header>														\
+ *		<header id="main">												\
  *			<article>													\
- *				<p data-ish-class="InfoView" data-ish-name="graphic">	\
+ *				<aside data-ish-class="InfoView" 						\
+ *						data-ish-name="graphic">						\
  *					<svg data-ish-class="GraphicView" 					\
  *						data-ish-name="illustration"> 					\
  *						put infographic here							\
  *					</svg>												\
- *				</p>													\
+ *					<p data-ish-class="WordView" 						\
+ *						data-ish-name="caption"> 						\
+ *						put caption here								\
+ *					</p>												\
+ *				</aside>												\
  *				<div>													\
  *					<div>												\
  *						<p data-ish-class="InfoView" 					\
@@ -132,9 +137,6 @@ if (!String.prototype.trim) {
  * GraphicView.prototype.constructor = GraphicView;
  * this.GraphicView = GraphicView;
  * al.context = this;
- * 
- * @examples
- * al.domUtils.getOuterHTML(al.emptyDiv) // => '<div></div>'
  */
 var AutoLayout = function(options) {
 	// This will be prepended to any require() calls to get the View's object.
@@ -240,7 +242,7 @@ AutoLayout.prototype.attribsFromView = function(node){
 
 
 /**
- * Get the number of an node's `.children` which contain Views
+ * Get the number of an node's children which contain Views
  * @method numberOfChildrenWithViews
  * @param {(Element|Object)} node An `Element` or htmlparser2 `Object`
  * @returns {Number} The number of direct children which contain Views
@@ -374,21 +376,19 @@ AutoLayout.prototype.viewFromNode = function(node, parentView) {
 /**
  * Description
  * @method createViewForImplicitElements
- * @param {View} parentView
  * @param {(Element|Object)} implicitElements
  * @returns {View} The new View
  * @examples
  * var implicits = al.domUtils.emptyElement(al.emptyDiv);
  * var view1Node = al.domUtils.parseDOM('<li>Test goes here</li>', {normalizeWhitespace: true})[0];
  * al.domUtils.appendChild(implicits, view1Node);
- * var parent = new View();
- * var newView = al.createViewForImplicitElements(parent, implicits);
+ * var newView = al.createViewForImplicitElements(implicits);
  * var implicitChildren = al.domUtils.childNodes(implicits);
  *
  * implicitChildren.length // => 1
  * newView // instanceof View
  */
-AutoLayout.prototype.createViewForImplicitElements = function(parentView, implicitElements) {
+AutoLayout.prototype.createViewForImplicitElements = function(implicitElements) {
 	var self = this;
 	var nodeChildren = self.domUtils.childNodes(implicitElements);
 	if (nodeChildren && nodeChildren.length > 0) {
@@ -444,14 +444,8 @@ AutoLayout.prototype.treeForNode = function(parentView, node) {
 				// If so, generate a view for it… unless it's a placeholder.
 				if (childVisibility !== 'placeholder') {
 					var aView = self.viewFromNode(child, parentView);
-					// If visibility is set to hidden, we add the View, but mark it as hidden.
 					parentView.addSubview(aView);
 
-					// var subviewTree = self.treeForNode(aView, child);
-					// println("InnerHTML: " + self.domUtils.getOuterHTML(child).trim());
-					// println("subviewTree: ");
-					// println(subviewTree);
-					// println("OuterHTML: " + self.domUtils.getOuterHTML(subviewTree).trim());
 					var html = self.domUtils.getInnerHTML(node).trim();
 					aView.templateConst = html;
 					aView.templateName = null;
@@ -498,7 +492,7 @@ AutoLayout.prototype.treeForNode = function(parentView, node) {
 						self.domUtils.appendChild(subTree, self.domUtils.parseDOM("insert subviews (unescaped) here")[0]);
 					} else {
 						// Important: If we've saved up implicit elements between this view and the last, create an anonymous view to contain them.
-						var implicitView = self.createViewForImplicitElements(parentView, implicitElements, child);
+						var implicitView = self.createViewForImplicitElements(implicitElements);
 						implicitElements = self.domUtils.emptyElement(self.emptyDiv);
 						if (implicitView) {
 							parentView.addSubview(implicitView);
@@ -533,9 +527,10 @@ AutoLayout.prototype.treeForNode = function(parentView, node) {
  * @param {boolean=} normalizeWhitespace If `true`, all whitespace will be collapsed to a single space.
  * @returns {View} The view
  * @examples
- * var view1 = al.viewForHTML(snippet1, true);
- * var view2 = al.viewForHTML(snippet2, true);
- * var view3 = al.viewForHTML(snippet3, true);
+ * var view1 = al.viewForHTML(snippet1, null, true);
+ * var view2 = al.viewForHTML(snippet2, null, true);
+ * var view3 = al.viewForHTML(snippet3, null, true);
+ * var view2id = al.viewForHTML(snippet2, {"id": "main"}, true);
  *
  * view1 !== null // => true
  * view1 // instanceof View
@@ -550,9 +545,9 @@ AutoLayout.prototype.treeForNode = function(parentView, node) {
  * view1.subviews[3].subviews[0] // instanceof WordView
  * view2 !== null // => true
  * view2 // instanceof View
- * view2.templateConst // =~ /<div id="word" data-ish-class="WordView">\s*<ul>\s*<li>\s*test\s*<\/li>\s*<\/ul>\s*<header>\s*<article>\s*insert subviews \(unescaped\) here\s*<\/article>\s*<\/header>\s*<p>\s*Copyright 2015\s*<\/p>\s*<\/div>/
+ * view2.templateConst // =~ /<div id="word" data-ish-class="WordView">\s*<ul>\s*<li>\s*test\s*<\/li>\s*<\/ul>\s*<header id="main">\s*<article>\s*insert subviews \(unescaped\) here\s*<\/article>\s*<\/header>\s*<p>\s*Copyright 2015\s*<\/p>\s*<\/div>/
  * view2.subviews.length // => 2
- * view2.subviews[0].subviews.length // => 1
+ * view2.subviews[0].subviews.length // => 2
  * view2.subviews[0].name // => "graphic"
  * view2.subviews[0] // instanceof InfoView
  * view2.subviews[0].subviews[0].subviews.length // => 0
@@ -569,13 +564,15 @@ AutoLayout.prototype.treeForNode = function(parentView, node) {
  * view3.subviews[1].hidden // => false
  * view3.subviews[1].subviews.length // => 1
  * view3.subviews[1].subviews[0].templateConst // =~ /"Tricky">\s*put visible here\s*<\/p>\s*$/
+ * view2id.subviews.length // => 2
+ * view2id.templateConst // =~ /^\s*<header id="main">\s*<article>\s*insert subviews \(unescaped\) here\s*<\/article>\s*<\/header>$/
  */
-AutoLayout.prototype.viewForHTML = function(someHtml, normalizeWhitespace) {
+AutoLayout.prototype.viewForHTML = function(someHtml, selector, normalizeWhitespace) {
 	var self = this;
 
 	var aView = new self.context['View']();
 	aView.useAutoLayout = false;
-	self.autoLayoutViewWithHTML(aView, someHtml, normalizeWhitespace);
+	self.autoLayoutViewWithHTML(aView, someHtml, selector, normalizeWhitespace);
 	return aView;
 };
 
@@ -585,10 +582,11 @@ AutoLayout.prototype.viewForHTML = function(someHtml, normalizeWhitespace) {
  * @method autoLayoutViewWithHTML
  * @param {View} aView
  * @param {String} someHtml
+ * @param {Object} selector
  * @param {boolean=} normalizeWhitespace
  * @returns {AutoLayout} Self
  */
-AutoLayout.prototype.autoLayoutViewWithHTML = function(aView, someHtml, normalizeWhitespace) {
+AutoLayout.prototype.autoLayoutViewWithHTML = function(aView, someHtml, selector, normalizeWhitespace) {
 	var self = this;
 	if (!someHtml) {
 		return self;
@@ -596,13 +594,27 @@ AutoLayout.prototype.autoLayoutViewWithHTML = function(aView, someHtml, normaliz
 
 	var dom =  self.domUtils.parseDOM(someHtml.trim(), {normalizeWhitespace: normalizeWhitespace ? true : false});
 
-	var stripped = self.domUtils.stripIgnored(dom[0]);
+	if (dom && (typeof(dom) === typeof([]))) {
+		var stripped = self.domUtils.stripIgnored(dom[0]);
+		if (stripped) {
+			var element = stripped;
+			if (selector) {
+				if (selector.query) {
+					//
+				} else if (selector['id']) {
+					element = self.domUtils.getElementById(stripped, selector['id']);
+				}
+			}
 
-	var first = self.firstChildWithView(stripped);
-	if (first !== null) {
-		var tree = self.treeForNode(aView, stripped);
-		aView.templateConst = self.domUtils.getOuterHTML(tree);
-		aView.templateName = null;
+			var first = self.firstChildWithView(element);
+			if (first !== null) {
+				var tree = self.treeForNode(aView, element);
+				if (tree) {
+					aView.templateConst = self.domUtils.getOuterHTML(tree);
+					aView.templateName = null;
+				}
+			}
+		}
 	}
 	return self;
 };

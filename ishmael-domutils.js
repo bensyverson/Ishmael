@@ -25,11 +25,11 @@ var NativeDOMUtils = function() {
  * @returns {Array} An array of htmlparser2 `Object`s or native DOM `Element` objects 
  * @exampleHelpers
  * var utils = new NativeDOMUtils();
- * var html = '<div id="test"><p>Testing</p></div>';
+ * var html = '<div id="test"><p id="inner">Testing</p></div>';
  * var arr = utils.parseDOM(html);
  * var el = arr[0];
  * @examples
- * var nodes = utils.parseDOM('<div id="test"><p></p></div>');
+ * var nodes = utils.parseDOM(html);
  * var div = nodes[0];
  *
  * nodes // instanceof Array
@@ -63,7 +63,7 @@ NativeDOMUtils.prototype.parseDOM = function(aString, options) {
  * var roundtrip = utils.getInnerHTML(el);
  * 
  * roundtrip !== null // => true
- * roundtrip === '<p></p>' // => true
+ * roundtrip === '<p id="inner">Testing</p>' // => true
  */
  NativeDOMUtils.prototype.getInnerHTML = function(anElement) {
 	var self = this;
@@ -91,6 +91,42 @@ NativeDOMUtils.prototype.parseDOM = function(aString, options) {
 		return anElement.outerHTML;
 	} else {
 		return DomUtils.getOuterHTML(anElement);
+	}
+	return null;
+};
+
+/**
+ * Get a node by its `id`
+ * @param {(Element|Object)} aParent A parent DOM `Element` or htmlparser2 `Object`
+ * @returns {(Element|Object)} The resulting node
+ * @examples
+ * var child = utils.getElementById(el, 'inner');
+ * var parent = utils.getElementById(el, 'test');
+ * 
+ * child !== null // => true
+ * parent !== null // => true
+ */
+ NativeDOMUtils.prototype.getElementById = function(aParent, anId) {
+	var self = this;
+	if (self.isNative) {
+		var attribs = self.getAttribs(aParent);
+		if (attribs
+			&& attribs['id']
+			&& (attribs['id'] === anId)) {
+			return aParent;
+		}
+
+		var childNodes = self.childNodes(aParent);
+		if (childNodes) {
+			for (var i = 0; i < childNodes.length; i++) {
+				var innerChild = self.getElementById(childNodes[i], anId);
+				if (innerChild) {
+					return innerChild;
+				}
+			}
+		}
+	} else {
+		return DomUtils.getElementById(anId, aParent, true);
 	}
 	return null;
 };

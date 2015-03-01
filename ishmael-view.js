@@ -127,7 +127,7 @@ View.prototype.init = function(cb) {
 	if (self.templateName) {
 		if (self.useAutoLayout) {
 			PutStuffHere.shared().getHTML(self.templateName, function(err, html){
-				self.autoLayout(html);
+				self.autoLayout(html, self.selector());
 				initDone();
 			});
 		} else {
@@ -135,12 +135,32 @@ View.prototype.init = function(cb) {
 		}
 	} else {
 		// self.templateConst = self.autoLayout(self.templateConst);
-		var func = PutStuffHere.shared().compileText(self.templateConst);
-		setTemplate(null, func);
+		if (self.useAutoLayout) {
+			self.autoLayout(self.templateConst, self.selector());
+			initDone();
+		} else {
+			var func = PutStuffHere.shared().compileText(self.templateConst);
+			setTemplate(null, func);
+		}
 	}
 	return self;
 };
 
+View.prototype.selector = function() {
+	var self = this;
+	var hasQuery = /\?([^?#]+)$/;
+	var queryResult = hasQuery.exec(self.templateName);
+	if (queryResult && (queryResult.length > 0)) {
+		// get by name
+	} else {
+		var hasId = /#([^#]+)$/;
+		var idResult = hasId.exec(self.templateName);
+		if (idResult && (idResult.length > 0)) {
+			return {'id': idResult[1]};
+		} 
+	}
+	return null;
+};
 
 /**
  * Description
