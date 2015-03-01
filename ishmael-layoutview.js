@@ -81,6 +81,7 @@ if (!String.prototype.trim) {
  * var View = function(templateName, aName, cb) {
  * 	 var self = this;
  *   this.subviews = [];
+ *   this.name = aName || "Anonymous View";
  *   this.addSubview = function(aView) {
  *     this.subviews.push(aView);
  *   };
@@ -131,21 +132,17 @@ var AutoLayout = function(options) {
 
 AutoLayout.prototype.printSubviews = function(v) {
 	var anIndent = '';
+	println("SUBVIEWS: •••••••••••••••••••••••••••••••");
 	var innerPrintSubviews = function(aView, anIndent) {
-		println("\n" + anIndent + "• " + aView.identity() + ": '" + aView.name + "' (" + aView.uniqueId() + ")");
+		println("\n" + anIndent + "• " + /*aView.identity() + ": '" + */ aView.name + "' (" /*+ aView.uniqueId() */ + ")");
 		println(anIndent + aView.templateConst);
 
 		for (var i=0 ; i < aView.subviews.length; i++) {
 			innerPrintSubviews(aView.subviews[i], anIndent + '    ');
 		}
 	};
-	innerPrintSubviews(v);
+	innerPrintSubviews(v, anIndent);
 };
-
-
-
-var indent = '';
-
 
 /**
  * Determine if this `Element` or htmlparser2 `Object` has the `data-ish-class` attribute marking it as a View
@@ -228,11 +225,12 @@ AutoLayout.prototype.numberOfChildrenWithViews = function(node) {
  * @examples
  * var view1Node = al.domUtils.parseDOM(snippet1, {normalizeWhitespace: true})[0];
  * var firstChild = al.firstChildWithView(view1Node);
- * var aView = al.viewFromNode(firstChild, null);
+ * var firstHTML = al.domUtils.getOuterHTML(firstChild);
  *
  * firstChild != null // => true
- * aView // instanceof View
- * aView // instanceof InfoView
+ * view1Node != null // => true
+ * firstHTML // =~ /<p data-ish-class="InfoView" data-ish-name="infoView">\s*put info here\s*<\/p>/
+
  */
 AutoLayout.prototype.firstChildWithView = function(node) {
 	var self = this;
@@ -261,12 +259,12 @@ AutoLayout.prototype.firstChildWithView = function(node) {
  * @param {View} parentView
  * @returns {View} A new View
  * @examples
- * var view1Node = al.domUtils.parseDOM(snippet1, {normalizeWhitespace: true})[0];
- * var firstChild = al.firstChildWithView(view1Node);
- * var firstHTML = al.domUtils.getOuterHTML(firstChild);
+ * var view2Node = al.domUtils.parseDOM(snippet2, {normalizeWhitespace: true})[0];
+ * var aView = al.viewFromNode(view2Node);
  * 
- * view1Node != null // => true
- * firstHTML // =~ /<p data-ish-class="InfoView" data-ish-name="infoView">\s*put info here\s*<\/p>/
+ * view2Node != null // => true
+ * aView // instanceof View
+ * aView // instanceof WordView
  */
 AutoLayout.prototype.viewFromNode = function(node, parentView) {
 	var self = this;
@@ -278,13 +276,11 @@ AutoLayout.prototype.viewFromNode = function(node, parentView) {
 		if (className !== 'View') {
 			var ctx = self.context;
 			if (ctx) {
-				if (typeof(ctx[className]) !== typeof(undefined)) {
-//					if (ctx[className] instanceof View) {
-						aView = new ctx[className](null, attribs.name);
-//					}
+				if (typeof(ctx[className]) === typeof(function(){})) {
+					aView = new ctx[className](null, attribs.name);
 				}
 			}
-			if (aView == null) {
+			if (aView === null) {
 				try {
 					var requiredClass = require(self.viewRoot + className + '.js') || null;
 					if (requiredClass !== null) {
@@ -363,6 +359,9 @@ AutoLayout.prototype.createViewForImplicitElements = function(parentView, implic
  * var view1Node = al.domUtils.parseDOM(snippet1, {normalizeWhitespace: true})[0];
  * var aView = new View();
  * var tree = al.treeForNode(aView, view1Node);
+ * 
+ * tree != null // => true
+ * aView.subviews.length // => 4
  */
 AutoLayout.prototype.treeForNode = function(parentView, node) {
 	var self = this;
@@ -475,11 +474,29 @@ AutoLayout.prototype.treeForNode = function(parentView, node) {
  *
  * view1 !== null // => true
  * view1 // instanceof View
+ * view1.templateConst // =~ /<div id="word">\s*<ul>\s*<li>\s*test\s*<\/li>\s*<\/ul>\s*insert subviews \(unescaped\) here\s*<p>\s*The End\s*<\/p>\s*<\/div>/
  * view1.subviews.length // => 4
+ * view1.subviews[0].subviews.length // => 1
+ * view1.subviews[0].subviews[0] // instanceof InfoView
+ * view1.subviews[1].subviews.length // => 1
+ * view1.subviews[1].subviews[0] // instanceof InfoView
+ * view1.subviews[2].subviews.length // => 0
+ * view1.subviews[3].subviews.length // => 1
+ * view1.subviews[3].subviews[0] // instanceof WordView
  * view2 !== null // => true
  * view2 // instanceof View
- * view1.templateConst // =~ /<div id="word">\s*<ul>\s*<li>\s*test\s*<\/li>\s*<\/ul>\s*insert subviews \(unescaped\) here\s*<p>\s*The End\s*<\/p>\s*<\/div>/
  * view2.templateConst // =~ /<div id="word" data-ish-class="WordView">\s*<ul>\s*<li>\s*test\s*<\/li>\s*<\/ul>\s*<header>\s*<article>\s*insert subviews \(unescaped\) here\s*<\/article>\s*<\/header>\s*<p>\s*Copyright 2015\s*<\/p>\s*<\/div>/
+ * view2.subviews.length // => 2
+ * view2.subviews[0].subviews.length // => 1
+ * view2.subviews[0].name // => "graphic"
+ * view2.subviews[0] // instanceof InfoView
+ * view2.subviews[0].subviews[0].subviews.length // => 0
+ * view2.subviews[0].subviews[0].name // => "illustration"
+ * view2.subviews[0].subviews[0] // instanceof GraphicView
+ * view2.subviews[1].subviews.length // => 1
+ * view2.subviews[1].subviews[0] // instanceof InfoView
+ * view2.subviews[1].subviews[0].name // => "article"
+ * view2.subviews[1].subviews[0].subviews.length // => 0
  */
 AutoLayout.prototype.viewForHTML = function(someHtml, normalizeWhitespace) {
 	var self = this;
