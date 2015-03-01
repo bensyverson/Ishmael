@@ -60,14 +60,14 @@ if (!String.prototype.trim) {
  *			<article>													\
  *				<aside data-ish-class="InfoView" 						\
  *						data-ish-name="graphic">						\
- *					<svg data-ish-class="GraphicView" 					\
+ *					<span data-ish-class="GraphicView" 					\
  *						data-ish-name="illustration"> 					\
  *						put infographic here							\
- *					</svg>												\
- *					<p data-ish-class="WordView" 						\
+ *					</span>												\
+ *					<span data-ish-class="WordView" 					\
  *						data-ish-name="caption"> 						\
  *						put caption here								\
- *					</p>												\
+ *					</span>												\
  *				</aside>												\
  *				<div>													\
  *					<div>												\
@@ -86,11 +86,11 @@ if (!String.prototype.trim) {
  *	var snippet3 = '<div> 												\
  *		<p data-ish-class="InfoView" 									\
  * 			data-ish-name="graphic" data-ish-visibility="hidden">		\
- *			<svg data-ish-class="GraphicView" 							\
+ *			<span data-ish-class="GraphicView" 							\
  *				data-ish-name="illustration" 							\
  *				data-ish-visibility="placeholder"> 						\
  *				This tag should be replaced with subviews.				\
- *			</svg>														\
+ *			</span>														\
  *		</p>															\
  *		<p data-ish-class="TestView" data-ish-name="Ignore"				\
  *			data-ish-visibility="ignore">								\
@@ -260,7 +260,7 @@ AutoLayout.prototype.attribsFromView = function(node){
 AutoLayout.prototype.numberOfChildrenWithViews = function(node) {
 	var self = this;
 	// How many of my direct children have views?
-	if (self.nodeIsView(node)) return 1;
+	// if (self.nodeIsView(node)) return 1;
 	var viewCount = 0;
 	var nodeChildren = self.domUtils.childNodes(node);
 	if (nodeChildren) {
@@ -423,7 +423,6 @@ AutoLayout.prototype.treeForNode = function(parentView, node) {
 	var subTree = self.domUtils.emptyElement(node);
 	var visibility = self.visibilityOfNode(node);
 
-
 	var nodeChildren = self.domUtils.childNodes(node);
 	if (nodeChildren) {
 		if (nodeChildren.length < 1) {
@@ -446,7 +445,8 @@ AutoLayout.prototype.treeForNode = function(parentView, node) {
 					var aView = self.viewFromNode(child, parentView);
 					parentView.addSubview(aView);
 
-					var html = self.domUtils.getInnerHTML(node).trim();
+					var subviewTree = self.treeForNode(aView, child);
+					var html = self.domUtils.getOuterHTML(subviewTree).trim();
 					aView.templateConst = html;
 					aView.templateName = null;
 				}
@@ -466,6 +466,7 @@ AutoLayout.prototype.treeForNode = function(parentView, node) {
 		var implicitElements = self.domUtils.emptyElement(self.emptyDiv);
 		for (var i = 0 ; i < nodeChildren.length; i++) {
 			var subChildCount = self.numberOfChildrenWithViews(nodeChildren[i]);
+			if ((subChildCount == 0) && (self.nodeIsView(nodeChildren[i]))) subChildCount = 1;
 			childCounts[i] = subChildCount; // Cache this.
 			if (subChildCount > 0) {
 				if (first < 0) {
@@ -531,6 +532,7 @@ AutoLayout.prototype.treeForNode = function(parentView, node) {
  * var view2 = al.viewForHTML(snippet2, null, true);
  * var view3 = al.viewForHTML(snippet3, null, true);
  * var view2id = al.viewForHTML(snippet2, {"id": "main"}, true);
+ * var view2name = al.viewForHTML(snippet2, {"id": "graphic"}, true);
  *
  * view1 !== null // => true
  * view1 // instanceof View
@@ -566,6 +568,9 @@ AutoLayout.prototype.treeForNode = function(parentView, node) {
  * view3.subviews[1].subviews[0].templateConst // =~ /"Tricky">\s*put visible here\s*<\/p>\s*$/
  * view2id.subviews.length // => 2
  * view2id.templateConst // =~ /^\s*<header id="main">\s*<article>\s*insert subviews \(unescaped\) here\s*<\/article>\s*<\/header>$/
+ * view2name.subviews.length // => 2
+ * al.printSubviews(view2name) // undefined
+ * view2name.templateConst // =~ /^\s*<aside data-ish-class="InfoView" data-ish-name="graphic">\s*insert subviews \(unescaped\) here\s*<\/aside>\s*$/
  */
 AutoLayout.prototype.viewForHTML = function(someHtml, selector, normalizeWhitespace) {
 	var self = this;
@@ -598,14 +603,12 @@ AutoLayout.prototype.autoLayoutViewWithHTML = function(aView, someHtml, selector
 		var stripped = self.domUtils.stripIgnored(dom[0]);
 		if (stripped) {
 			var element = stripped;
-			if (selector) {
-				if (selector.query) {
-					//
-				} else if (selector['id']) {
-					element = self.domUtils.getElementById(stripped, selector['id']);
+			if (selector && selector['id']) {
+				element = self.domUtils.getElementById(stripped, selector['id']);
+				if (!element) {
+					element = self.domUtils.getElementByAttribute(stripped, 'data-ish-name', selector['id']);
 				}
 			}
-
 			var first = self.firstChildWithView(element);
 			if (first !== null) {
 				var tree = self.treeForNode(aView, element);

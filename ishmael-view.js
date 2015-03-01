@@ -148,16 +148,11 @@ View.prototype.init = function(cb) {
 
 View.prototype.selector = function() {
 	var self = this;
-	var hasQuery = /\?([^?#]+)$/;
-	var queryResult = hasQuery.exec(self.templateName);
-	if (queryResult && (queryResult.length > 0)) {
-		// get by name
-	} else {
-		var hasId = /#([^#]+)$/;
-		var idResult = hasId.exec(self.templateName);
-		if (idResult && (idResult.length > 0)) {
-			return {'id': idResult[1]};
-		} 
+	
+	var hasId = /#([^#]+)$/;
+	var idResult = hasId.exec(self.templateName);
+	if (idResult && (idResult.length > 0)) {
+		return {'id': idResult[1]};
 	}
 	return null;
 };

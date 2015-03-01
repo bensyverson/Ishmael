@@ -25,7 +25,7 @@ var NativeDOMUtils = function() {
  * @returns {Array} An array of htmlparser2 `Object`s or native DOM `Element` objects 
  * @exampleHelpers
  * var utils = new NativeDOMUtils();
- * var html = '<div id="test"><p id="inner">Testing</p></div>';
+ * var html = '<div id="test"><p id="inner" data-ish-name="label">Testing</p></div>';
  * var arr = utils.parseDOM(html);
  * var el = arr[0];
  * @examples
@@ -63,7 +63,7 @@ NativeDOMUtils.prototype.parseDOM = function(aString, options) {
  * var roundtrip = utils.getInnerHTML(el);
  * 
  * roundtrip !== null // => true
- * roundtrip === '<p id="inner">Testing</p>' // => true
+ * roundtrip // =~ /^\s*<p id="inner" data-ish-name="label">\s*Testing\s*<\/p>\s*$/
  */
  NativeDOMUtils.prototype.getInnerHTML = function(anElement) {
 	var self = this;
@@ -98,6 +98,7 @@ NativeDOMUtils.prototype.parseDOM = function(aString, options) {
 /**
  * Get a node by its `id`
  * @param {(Element|Object)} aParent A parent DOM `Element` or htmlparser2 `Object`
+ * @param {String} anId The `id`
  * @returns {(Element|Object)} The resulting node
  * @examples
  * var child = utils.getElementById(el, 'inner');
@@ -131,6 +132,37 @@ NativeDOMUtils.prototype.parseDOM = function(aString, options) {
 	return null;
 };
 
+/**
+ * Get the first node which has an attribute with a particular value.
+ * @param {(Element|Object)} aParent A parent DOM `Element` or htmlparser2 `Object`
+ * @param {String} anAttribute The name of the attribute
+ * @param {String} aValue The value of the attribute
+ * @returns {(Element|Object)} The resulting node
+ * @examples
+ * var child = utils.getElementByAttribute(el, 'data-ish-name', 'label');
+ * 
+ * child !== null // => true
+ */
+ NativeDOMUtils.prototype.getElementByAttribute = function(aParent, anAttribute, aValue) {
+	var self = this;
+	var attribs = self.getAttribs(aParent);
+	if (attribs
+		&& attribs[anAttribute]
+		&& (attribs[anAttribute] === aValue)) {
+		return aParent;
+	}
+
+	var childNodes = self.childNodes(aParent);
+	if (childNodes) {
+		for (var i = 0; i < childNodes.length; i++) {
+			var innerChild = self.getElementByAttribute(childNodes[i], anAttribute, aValue);
+			if (innerChild) {
+				return innerChild;
+			}
+		}
+	}
+	return null;
+};
 
 /**
  * Append a child to a parent DOM element
@@ -220,8 +252,9 @@ NativeDOMUtils.prototype.stripIgnored = function(node) {
 				(attribs['data-ish-visibility']) && 
 				(attribs['data-ish-visibility'] === 'ignore')) {
 				continue;
+			} else {
+				self.appendChild(newElement, self.stripIgnored(childNodes[i]));
 			}
-			self.appendChild(newElement, self.stripIgnored(childNodes[i]));
 		}
 	}
 	return newElement;
