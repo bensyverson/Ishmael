@@ -39,6 +39,7 @@ var View = function(templateName, aName, cb) {
 
 	this.addMarkup = true;
 	this.useAutoLayout = true;
+	this.hidden = false;
 
 	this.locals = {};
 
@@ -50,7 +51,6 @@ var View = function(templateName, aName, cb) {
 	this.initStarted = false;
 
 	this.registerClass('View');
-
 	// this.uniqueId = uuid().generate();
 };
 

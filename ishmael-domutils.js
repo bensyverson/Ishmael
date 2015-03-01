@@ -168,6 +168,30 @@ NativeDOMUtils.prototype.emptyElement = function(node) {
 };
 
 /**
+ * Description
+ * @method emptyElement
+ * @param {} node
+ * @returns {(Element|Object)} The stripped object
+ */
+NativeDOMUtils.prototype.stripIgnored = function(node) {
+	var self = this;
+	var newElement = self.emptyElement(node);
+	var childNodes = self.childNodes(node);
+	if (childNodes) {
+		for (var i = 0; i < childNodes.length; i++) {
+			var attribs = self.getAttribs(childNodes[i]);
+			if ((attribs) && 
+				(attribs['data-ish-visibility']) && 
+				(attribs['data-ish-visibility'] === 'ignore')) {
+				continue;
+			}
+			self.appendChild(newElement, self.stripIgnored(childNodes[i]));
+		}
+	}
+	return newElement;
+};
+
+/**
  * Get the tag attributes from an element
  * @param {Object} anElement An`Element` or htmlparser2 `Object`
  * @returns {Object} A bare `Object` with key => value maps for the attributes

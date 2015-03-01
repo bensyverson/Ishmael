@@ -13,4 +13,4 @@ autodoc --template index.html.mustache --javascripts queue.js,putstuffhere.js,is
 mv autodoc/index.html autodoc/ishmael-view.html
 
 
-docco --output annotated/ ishmael.js
+docco --output annotated/ ishmael*.js

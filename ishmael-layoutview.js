@@ -59,13 +59,15 @@ if (!String.prototype.trim) {
  *		<header>														\
  *			<article>													\
  *				<p data-ish-class="InfoView" data-ish-name="graphic">	\
- *					<svg data-ish-class="GraphicView" data-ish-name="illustration"> \
+ *					<svg data-ish-class="GraphicView" 					\
+ *						data-ish-name="illustration"> 					\
  *						put infographic here							\
  *					</svg>												\
  *				</p>													\
  *				<div>													\
  *					<div>												\
- *						<p data-ish-class="InfoView" data-ish-name="article">	\
+ *						<p data-ish-class="InfoView" 					\
+ *							data-ish-name="article">					\
  *							put article here							\
  *						</p>											\
  *					</div>												\
@@ -73,10 +75,31 @@ if (!String.prototype.trim) {
  *			</article>													\
  *		</header>														\
  *		<p>																\
- *			Copyright 2015										\
+ *			Copyright 2015												\
  *		</p>															\
  *	</div>';
-
+ *	var snippet3 = '<div> 												\
+ *		<p data-ish-class="InfoView" 									\
+ * 			data-ish-name="graphic" data-ish-visibility="hidden">		\
+ *			<svg data-ish-class="GraphicView" 							\
+ *				data-ish-name="illustration" 							\
+ *				data-ish-visibility="placeholder"> 						\
+ *				This tag should be replaced with subviews.				\
+ *			</svg>														\
+ *		</p>															\
+ *		<p data-ish-class="TestView" data-ish-name="Ignore"				\
+ *			data-ish-visibility="ignore">								\
+ *			This tag should be removed from the template.				\
+ *		</p>															\
+ *		<div>															\
+ *			<div>														\
+ *				<p data-ish-class="WordView" data-ish-name="Tricky">	\
+ *					<span data-ish-visibility="ignore">HideMe</span>	\
+ *					put visible here									\
+ *				</p>													\
+ *			</div>														\
+ *		</div>															\
+ *	</div>';
  * var al = new AutoLayout();
  * var View = function(templateName, aName, cb) {
  * 	 var self = this;
@@ -163,8 +186,31 @@ AutoLayout.prototype.nodeIsView = function(node) {
 	var attribs = self.domUtils.getAttribs(node);
 	return (typeof(attribs) !== typeof(undefined))
 			&& (attribs !== {})
-			&& (typeof(attribs['data-ish-class']) !== typeof(undefined));
+			&& (typeof(attribs['data-ish-class']) !== typeof(undefined))
+			;
 }
+
+/**
+ * Determine visibility of this specific node
+ * @method visibilityOfNode
+ * @param {(Element|Object)} node An `Element` or htmlparser2 `Object`
+ * @param {Object=} attribs Optionally pass in the attributes
+ * @returns {String} A string describing the visibility
+ * @examples
+ * al.visibilityOfNode(null, {"data-ish-visibility": "hidden"}) // => 'hidden'
+ * al.visibilityOfNode(null, {"data-ish-class": "test", "data-ish-name": "El"}) // => 'visible'
+ * al.visibilityOfNode(null, null) // => 'visible'
+ */
+AutoLayout.prototype.visibilityOfNode = function(node, attribs) {
+	var self = this;
+	if ((!attribs) && node) {
+		attribs = self.domUtils.getAttribs(node);
+	}
+	if (attribs && attribs['data-ish-visibility']) {
+		return attribs['data-ish-visibility'];
+	}
+	return 'visible';
+};
 
 /**
  * Description
@@ -173,18 +219,22 @@ AutoLayout.prototype.nodeIsView = function(node) {
  * @returns {Object} An object dictionary with the className and name 
  * @examples
  * var nodeWithView = al.domUtils.parseDOM('<div data-ish-class="TestView" data-ish-name="Example"></div>', {normalizeWhitespace: true})[0];
+ * var hiddenNode = al.domUtils.parseDOM('<p data-ish-class="EdView" data-ish-name="Ed" data-ish-visibility="hidden"></p>', {normalizeWhitespace: true})[0];
  *
- * al.attribsFromView(nodeWithView) // => {"className": "TestView", "name": "Example"}
- * al.attribsFromView(al.emptyDiv) // => {"className": null, "name": null}
+ * al.attribsFromView(nodeWithView) // => {"className": "TestView", "name": "Example", "visibility": "visible"}
+ * al.attribsFromView(hiddenNode) // => {"className": "EdView", "name": "Ed", "visibility": "hidden"}
+ * al.attribsFromView(al.emptyDiv) // => {"className": null, "name": null, "visibility": "visible"}
  */
 AutoLayout.prototype.attribsFromView = function(node){
 	var self = this;
 	var attribs = self.domUtils.getAttribs(node);
 	var containerClass = (attribs && attribs['data-ish-class']) ? attribs['data-ish-class'] : null;
 	var containerName = (attribs && attribs['data-ish-name']) ? attribs['data-ish-name'] : null;
+	var visibility = self.visibilityOfNode(node, attribs);
 	return {
 		className: containerClass,
 		name: containerName,
+		visibility: visibility,
 	}
 }
 
@@ -197,9 +247,13 @@ AutoLayout.prototype.attribsFromView = function(node){
  * @examples
  * var view1Node = al.domUtils.parseDOM(snippet1, {normalizeWhitespace: true})[0];
  * var view2Node = al.domUtils.parseDOM(snippet2, {normalizeWhitespace: true})[0];
+ * var view3Node = al.domUtils.parseDOM(snippet3, {normalizeWhitespace: true})[0];
+ * var view3Stripped = al.domUtils.stripIgnored(view3Node);
  *
  * al.numberOfChildrenWithViews(view1Node) // => 3
  * al.numberOfChildrenWithViews(view2Node) // => 1
+ * al.numberOfChildrenWithViews(view3Node) // => 3
+ * al.numberOfChildrenWithViews(view3Stripped) // => 2
  */
 AutoLayout.prototype.numberOfChildrenWithViews = function(node) {
 	var self = this;
@@ -230,7 +284,6 @@ AutoLayout.prototype.numberOfChildrenWithViews = function(node) {
  * firstChild != null // => true
  * view1Node != null // => true
  * firstHTML // =~ /<p data-ish-class="InfoView" data-ish-name="infoView">\s*put info here\s*<\/p>/
-
  */
 AutoLayout.prototype.firstChildWithView = function(node) {
 	var self = this;
@@ -271,6 +324,7 @@ AutoLayout.prototype.viewFromNode = function(node, parentView) {
 	var attribs = self.attribsFromView(node);
 	var className = attribs['className'];
 	var instanceName = attribs['name'];
+	var hidden = attribs['visibility'] && (attribs['visibility'] === 'hidden');
 	var aView = null;
 	if ((typeof(className) !== typeof(undefined)) && (className !== null)) {
 		if (className !== 'View') {
@@ -297,6 +351,8 @@ AutoLayout.prototype.viewFromNode = function(node, parentView) {
 		aView = new self.context['View'](null, attribs.name);
 	}
 
+	aView.hidden = hidden;
+
 	if (self.setInstanceVariables) {
 		if ((typeof(instanceName) !== typeof(undefined)) && (instanceName !== null)) {
 			var aParent = parentView;
@@ -311,7 +367,6 @@ AutoLayout.prototype.viewFromNode = function(node, parentView) {
 		}
 	}
 
-	// if all else fails
 	aView.useAutoLayout = false;
 	return aView;
 };
@@ -366,6 +421,8 @@ AutoLayout.prototype.createViewForImplicitElements = function(parentView, implic
 AutoLayout.prototype.treeForNode = function(parentView, node) {
 	var self = this;
 	var subTree = self.domUtils.emptyElement(node);
+	var visibility = self.visibilityOfNode(node);
+
 
 	var nodeChildren = self.domUtils.childNodes(node);
 	if (nodeChildren) {
@@ -381,18 +438,24 @@ AutoLayout.prototype.treeForNode = function(parentView, node) {
 		// If only one of our children contains a view, then iterate through the elements.
 		for (var i = 0 ; i < nodeChildren.length; i++) {
 			var child = nodeChildren[i];
+			// Is this node a container for a View?
 			if (self.nodeIsView(child)) {
-				// If we find a direct view, add it immediately.
-				var aView = self.viewFromNode(child, parentView);
-				parentView.addSubview(aView);
+				var childVisibility = self.visibilityOfNode(child);
+				// If so, generate a view for it… unless it's a placeholder.
+				if (childVisibility !== 'placeholder') {
+					var aView = self.viewFromNode(child, parentView);
+					// If visibility is set to hidden, we add the View, but mark it as hidden.
+					parentView.addSubview(aView);
 
-				var subviewTree = self.treeForNode(aView, child);
-				var html = self.domUtils.getInnerHTML(node).trim();
-				aView.templateConst = html;
-				aView.templateName = null;
-
-				parentView = aView;
-
+					// var subviewTree = self.treeForNode(aView, child);
+					// println("InnerHTML: " + self.domUtils.getOuterHTML(child).trim());
+					// println("subviewTree: ");
+					// println(subviewTree);
+					// println("OuterHTML: " + self.domUtils.getOuterHTML(subviewTree).trim());
+					var html = self.domUtils.getInnerHTML(node).trim();
+					aView.templateConst = html;
+					aView.templateName = null;
+				}
 				self.domUtils.appendChild(subTree, self.domUtils.parseDOM("insert subviews (unescaped) here")[0]);
 			} else {
 				// Otherwise, add the tree for the given element.
@@ -422,13 +485,12 @@ AutoLayout.prototype.treeForNode = function(parentView, node) {
 		for (var i = 0 ; i < nodeChildren.length; i++) {
 			var child = nodeChildren[i];
 			var subChildCount = childCounts[i];
-
+			var childVisibility = self.visibilityOfNode(child);
 			if ((i < first) || (i > last)) {
 				// If we're before or after the subviews, just add this node to the tree normally.
 				self.domUtils.appendChild(subTree, child);
 			} else if ((i >= first) && (i <= last)) {
 				// Otherwise, we're a subview *or* between subviews.
-
 				if (subChildCount > 0) {
 					// In this case, this child node contains a View.
 					if (i == first) {
@@ -444,13 +506,15 @@ AutoLayout.prototype.treeForNode = function(parentView, node) {
 					}
 
 					// Finally, create the view for this node. Note that we're creating this explicitly, because regardless of whether `child` is an explicit view or not, all the children in this range need container views.
-					var aView = self.viewFromNode(child, parentView);
-					parentView.addSubview(aView);
+					if (childVisibility !== 'placeholder') {
+						var aView = self.viewFromNode(child, parentView);
+						parentView.addSubview(aView);
 
-					var subviewTree = self.treeForNode(aView, child);
-					var html = self.domUtils.getOuterHTML(subviewTree);
-					aView.templateConst = html;
-					aView.templateName = null;
+						var subviewTree = self.treeForNode(aView, child);
+						var html = self.domUtils.getOuterHTML(subviewTree).trim();
+						aView.templateConst = html;
+						aView.templateName = null;
+					}
 				} else {
 					// This node has no subviews, so we'll collect it in the implicitElements subtree. When the next view gets added, we'll make a container view for all of implicitElements.
 					self.domUtils.appendChild(implicitElements, child);
@@ -471,6 +535,7 @@ AutoLayout.prototype.treeForNode = function(parentView, node) {
  * @examples
  * var view1 = al.viewForHTML(snippet1, true);
  * var view2 = al.viewForHTML(snippet2, true);
+ * var view3 = al.viewForHTML(snippet3, true);
  *
  * view1 !== null // => true
  * view1 // instanceof View
@@ -497,6 +562,13 @@ AutoLayout.prototype.treeForNode = function(parentView, node) {
  * view2.subviews[1].subviews[0] // instanceof InfoView
  * view2.subviews[1].subviews[0].name // => "article"
  * view2.subviews[1].subviews[0].subviews.length // => 0
+ * view3.subviews.length // => 2
+ * view3.subviews[0] // => instanceof InfoView
+ * view3.subviews[0].hidden // => true
+ * view3.subviews[0].subviews.length // => 0
+ * view3.subviews[1].hidden // => false
+ * view3.subviews[1].subviews.length // => 1
+ * view3.subviews[1].subviews[0].templateConst // =~ /"Tricky">\s*put visible here\s*<\/p>\s*$/
  */
 AutoLayout.prototype.viewForHTML = function(someHtml, normalizeWhitespace) {
 	var self = this;
@@ -524,9 +596,11 @@ AutoLayout.prototype.autoLayoutViewWithHTML = function(aView, someHtml, normaliz
 
 	var dom =  self.domUtils.parseDOM(someHtml.trim(), {normalizeWhitespace: normalizeWhitespace ? true : false});
 
-	var first = self.firstChildWithView(dom[0]);
+	var stripped = self.domUtils.stripIgnored(dom[0]);
+
+	var first = self.firstChildWithView(stripped);
 	if (first !== null) {
-		var tree = self.treeForNode(aView, dom[0]);
+		var tree = self.treeForNode(aView, stripped);
 		aView.templateConst = self.domUtils.getOuterHTML(tree);
 		aView.templateName = null;
 	}
