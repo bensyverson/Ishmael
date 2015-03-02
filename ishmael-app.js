@@ -61,11 +61,9 @@ App.prototype.bootstrap = function(anId, cb) {
 
 	// i18n.init(option, function() {
 		self.rootViewController().loadView();
-		self.rootViewController().viewDidLoad();
-
-		
-		self.rootViewController().viewWillAppear();
 		self.rootViewController().view.bindToAppElement(self, document.getElementById(anId), function(err, id) {
+			self.rootViewController().viewDidLoad();		
+			self.rootViewController().viewWillAppear();
 			self.rootViewController().viewDidAppear();
 			if (typeof(cb) === typeof(function(){})) cb(err, id);
 		});

@@ -66,7 +66,7 @@ View.prototype.constructor = View;
 View.prototype.checkTemplate = function() {
 	var self = this;
 
-	if (typeof(self.template) === typeof(undefined)) {
+	if (!self.template) {
 		self.initialized = false;	
 	}
 
@@ -101,13 +101,12 @@ View.prototype.init = function(cb) {
 	 * @returns 
 	 */
 	var initDone = function() {
-		self.initialized = true;
 		self.queue.flush();
 		if (cb) cb(null, self.uniqueId());
 	};
 
 	if (self.initialized) {
-		initDone();
+		if (cb) cb(null, self.uniqueId());
 		return;
 	}
 
@@ -119,25 +118,27 @@ View.prototype.init = function(cb) {
 	 * @returns 
 	 */
 	var setTemplate = function(err, template) {
-		if (!err) {
+		if ((!err) && template) {
 			self.template = template;
 		}
+		self.initialized = (self.template != null);
 		self.initializeSubviews(initDone);
 	};
+
 	if (self.templateName) {
 		if (self.useAutoLayout) {
 			PutStuffHere.shared().getHTML(self.templateName, function(err, html){
 				self.autoLayout(html, self.selector());
-				initDone();
+				setTemplate();
 			});
 		} else {
 			PutStuffHere.shared().getTemplateFunction(self.templateName, setTemplate);
 		}
 	} else {
 		// self.templateConst = self.autoLayout(self.templateConst);
-		if (self.useAutoLayout) {
+		if (self.useAutoLayout && self.templateConst) {
 			self.autoLayout(self.templateConst, self.selector());
-			initDone();
+			setTemplate();
 		} else {
 			var func = PutStuffHere.shared().compileText(self.templateConst);
 			setTemplate(null, func);
@@ -165,15 +166,21 @@ View.prototype.selector = function() {
  */
 View.prototype.autoLayout = function(html) {
 	var self = this;
-	if (self.useAutoLayout !== true) return html;
+	if (self.useAutoLayout !== true) {
+		println("WARNING: autoLayout called on manual layout view.");
+	}
+	if (self.template == null) {
+		var AutoLayout = global.AutoLayout || require('./ishmael-layoutview.js');
 
-	var AutoLayout = AutoLayout || require('./ishmael-layoutview.js');
+		var al = new AutoLayout();
+		al.autoLayoutViewWithHTML(self, html, true);
 
-	var al = new AutoLayout();
-	al.autoLayoutViewWithHTML(self, html, true);
+		// al.printSubviews(self);
 
-	var func = PutStuffHere.shared().compileText(self.templateConst);
-	self.template = func;
+		var func = PutStuffHere.shared().compileText(self.templateConst);
+		self.template = func;
+		self.initialized = (self.template != null);
+	}
 };
 
 /**
@@ -274,6 +281,7 @@ View.prototype.element = function(){
  */
 View.prototype.initializeSubviews = function(cb){
 	var self = this;
+
 
 	if (self.subviews.length > 0) {
 		var i = 0;
@@ -409,9 +417,9 @@ View.prototype.update = function(cb) {
 		return;
 	}
 
-	// if (!self.initialized) {
-	// 	return;
-	// }
+	if ((!self.initialized) && (self.initStarted)) {
+		return;
+	}
 
 	self.enqueue(function() {
 		self.layoutSubviews();
@@ -433,7 +441,6 @@ View.prototype.update = function(cb) {
 			if (cb) cb(err, self.uniqueId());
 		});
 	});
-
 	return self;
 };
 
@@ -557,6 +564,16 @@ View.prototype._render = function(isBrowser) {
 };
 
 /**
+ * Create any subviews necessary
+ * @method renderHTML
+ * @param {Function} cb A callback
+ * @returns self
+ */
+View.prototype.createSubviews = function() {
+	var self = this;
+};
+
+/**
  * Render to HTML asynchronously
  * @method renderHTML
  * @param {Function} cb A callback
@@ -566,10 +583,8 @@ View.prototype.renderHTML = function(cb) {
 	var self = this;
 
 	self.enqueue(function() {
-		self.createSubviews();
-
-		self.layoutSubviews({keepElements: true});
 		// Layout if needed. This lets a subclass change its layout (add/remove subviews) based on the locals.
+		self.layoutSubviews();
 
 		self.initializeSubviews(function() {
 			if (typeof(cb) === typeof(function(){})) cb(null, self._render());	
@@ -588,7 +603,7 @@ View.prototype.renderSnapshot = function(cb) {
 	var self = this;
 
 	self.enqueue(function() {
-		self.layoutSubviews({keepElements: true});
+		self.layoutSubviews();
 
 		self.initializeSubviews(function() {
 			if (typeof(cb) === typeof(function(){})) cb(null, self._render());	

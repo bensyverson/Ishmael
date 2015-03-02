@@ -354,6 +354,7 @@ AutoLayout.prototype.viewFromNode = function(node, parentView) {
 	}
 
 	aView.hidden = hidden;
+	aView.useAutoLayout = false;
 
 	if (self.setInstanceVariables) {
 		if ((typeof(instanceName) !== typeof(undefined)) && (instanceName !== null)) {
@@ -610,13 +611,14 @@ AutoLayout.prototype.autoLayoutViewWithHTML = function(aView, someHtml, selector
 				}
 			}
 			var first = self.firstChildWithView(element);
+			var tree = null;
 			if (first !== null) {
-				var tree = self.treeForNode(aView, element);
-				if (tree) {
-					aView.templateConst = self.domUtils.getOuterHTML(tree);
-					aView.templateName = null;
-				}
+				tree = self.treeForNode(aView, element);
+			} else {
+				tree = stripped;
 			}
+			aView.templateConst = self.domUtils.getOuterHTML(tree);
+			aView.templateName = null;
 		}
 	}
 	return self;
