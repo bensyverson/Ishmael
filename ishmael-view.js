@@ -7,6 +7,8 @@
  * @returns 
  */
 var println = function(x){console.log(x);}
+var printWarning = function(x) { console.log('\x1b[33mWARNING: %s\x1b[0m', x);};
+var printError = function(x) { console.log('\x1b[31mERROR: %s\x1b[0m', x);};
 var global = Function('return this')();
 if (typeof(require) === typeof(undefined))  global.require = function(){return null;};
 
@@ -95,11 +97,6 @@ View.prototype.init = function(cb) {
 
 	self.initStarted = true;
 
-	/**
-	 * Set ourselves as initialized, run the queue, and do our callback.
-	 * @method initDone
-	 * @returns 
-	 */
 	var initDone = function() {
 		self.queue.flush();
 		if (cb) cb(null, self.uniqueId());
@@ -110,13 +107,6 @@ View.prototype.init = function(cb) {
 		return;
 	}
 
-	/**
-	 * Description
-	 * @method setTemplate
-	 * @param {} err
-	 * @param {} template
-	 * @returns 
-	 */
 	var setTemplate = function(err, template) {
 		if ((!err) && template) {
 			self.template = template;
@@ -135,7 +125,6 @@ View.prototype.init = function(cb) {
 			PutStuffHere.shared().getTemplateFunction(self.templateName, setTemplate);
 		}
 	} else {
-		// self.templateConst = self.autoLayout(self.templateConst);
 		if (self.useAutoLayout && self.templateConst) {
 			self.autoLayout(self.templateConst, self.selector());
 			setTemplate();
@@ -149,12 +138,13 @@ View.prototype.init = function(cb) {
 
 View.prototype.selector = function() {
 	var self = this;
-	
+
 	var hasId = /#([^#]+)$/;
 	var idResult = hasId.exec(self.templateName);
 	if (idResult && (idResult.length > 0)) {
 		return {'id': idResult[1]};
 	}
+
 	return null;
 };
 
@@ -167,7 +157,7 @@ View.prototype.selector = function() {
 View.prototype.autoLayout = function(html) {
 	var self = this;
 	if (self.useAutoLayout !== true) {
-		println("WARNING: autoLayout called on manual layout view.");
+		printWarning("AutoLayout called on manual layout view.");
 	}
 	if (self.template == null) {
 		var AutoLayout = global.AutoLayout || require('./ishmael-layoutview.js');
@@ -192,12 +182,6 @@ View.prototype.autoLayout = function(html) {
 View.prototype.subview = function(selector) {
 	var self = this;
 
-	/**
-	 * Description
-	 * @method selectByName
-	 * @param {} aName
-	 * @returns 
-	 */
 	var selectByName = function(aName) {
 		for (var i = 0; i < self.subviews.length; i++) {
 			var aSubview = self.subviews[i];
@@ -268,6 +252,8 @@ View.prototype.element = function(){
 		if (elements.length > 0) {
 			return elements[0];
 		}
+	} else {
+		printWarning("element() called in a non-browser context.");  //cyan
 	}
 	return null;
 };
@@ -285,11 +271,7 @@ View.prototype.initializeSubviews = function(cb){
 
 	if (self.subviews.length > 0) {
 		var i = 0;
-		/**
-		 * Description
-		 * @method nextFunction
-		 * @returns 
-		 */
+		
 		var nextFunction = function() {
 			if (i < self.subviews.length) {
 				self.subviews[i++].init(function(){
