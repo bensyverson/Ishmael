@@ -383,19 +383,29 @@ AutoLayout.prototype.viewFromNode = function(node, parentView) {
  * var implicits = al.domUtils.emptyElement(al.emptyDiv);
  * var view1Node = al.domUtils.parseDOM('<li>Test goes here</li>', {normalizeWhitespace: true})[0];
  * al.domUtils.appendChild(implicits, view1Node);
- * var newView = al.createViewForImplicitElements(implicits);
+ * var newView = al.createViewForImplicitElements(implicits, null);
  * var implicitChildren = al.domUtils.childNodes(implicits);
  *
  * implicitChildren.length // => 1
  * newView // instanceof View
  */
-AutoLayout.prototype.createViewForImplicitElements = function(implicitElements) {
+AutoLayout.prototype.createViewForImplicitElements = function(implicitElements, parentView) {
 	var self = this;
 	var nodeChildren = self.domUtils.childNodes(implicitElements);
 	if (nodeChildren && nodeChildren.length > 0) {
 		var html = self.domUtils.getInnerHTML(implicitElements).trim();
 		if (html.length > 0) {
-			var implicitView = new self.context['View']();
+			var implicitView = null;
+
+			// Round trip us back to the DOM. What's happening here is that this n
+			// var newTree = self.domUtils.parseDOM(html);
+
+			// If we just have one child, get the View from the node. 
+			if (nodeChildren.length == 1) {
+				implicitView = self.viewFromNode(nodeChildren[0], parentView);
+			} else {
+				implicitView = new self.context['View']();
+			}
 			implicitView.useAutoLayout = false;
 			implicitView.templateName = null;
 			implicitView.templateConst = html;
@@ -494,7 +504,7 @@ AutoLayout.prototype.treeForNode = function(parentView, node) {
 						self.domUtils.appendChild(subTree, self.domUtils.parseDOM("insert subviews (unescaped) here")[0]);
 					} else {
 						// Important: If we've saved up implicit elements between this view and the last, create an anonymous view to contain them.
-						var implicitView = self.createViewForImplicitElements(implicitElements);
+						var implicitView = self.createViewForImplicitElements(implicitElements, parentView);
 						implicitElements = self.domUtils.emptyElement(self.emptyDiv);
 						if (implicitView) {
 							parentView.addSubview(implicitView);
@@ -513,7 +523,11 @@ AutoLayout.prototype.treeForNode = function(parentView, node) {
 					}
 				} else {
 					// This node has no subviews, so we'll collect it in the implicitElements subtree. When the next view gets added, we'll make a container view for all of implicitElements.
-					self.domUtils.appendChild(implicitElements, child);
+					// println(self.domUtils.getOuterHTML(child));
+					if (child.data && child.data.trim() === '') {
+					} else {
+						self.domUtils.appendChild(implicitElements, child);
+					}
 				}
 			}
 		}

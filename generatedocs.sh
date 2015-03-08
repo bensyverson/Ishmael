@@ -1,5 +1,8 @@
 #!/bin/sh
 
+autodoc -t --javascripts queue.js,putstuffhere.js,ishmael.js,ishmael-view.js,ishmael-domutils.js ishmael-layoutview.js
+mv autodoc/index.html autodoc/ishmael-layoutview.html
+
 autodoc --template index.html.mustache --javascripts queue.js,putstuffhere.js,ishmael.js,ishmael-view.js,ishmael-domutils.js ishmael-layoutview.js
 mv autodoc/index.html autodoc/ishmael-layoutview.html
 

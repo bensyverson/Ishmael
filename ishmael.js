@@ -134,20 +134,19 @@ var Representable = function() {
 
 
 /**
- * The Freeze method serializes a Representable object to JSON, including object references
+ * The toJSON method prepares a Representable object (including object references) for serialization. Despite the name of this method, it does not return JSON; the name is purely for API compatibility with `JSON.stringify` 
  * @memberOf Representable
- * @method freeze
- * @returns {String} A JSON representation of this Representable instance.
+ * @method toJSON
+ * @returns {Object} An `Object` representation of this Representable instance, ready to be serialized with `JSON.stringify`
  * @examples
  * var parent = new Representable();
  * var child = new Representable();
  * child.parent = parent;
  * parent.child = child;
  * 
- * // JSON.serialize(child) // throws 
- * child.freeze() // =~ /\{(("_uniqueId":[^,]+,?)|("_className":[^,]+,?)|("parent":\{("_uniqueId":[^,]+,?)|("_className":[^,]+,?)|("child":\{"\$_ish":[^,]+\})\}))+\}/
+ * JSON.stringify(child) // =~ /\{(("_uniqueId":[^,]+,?)|("_className":[^,]+,?)|("parent":\{("_uniqueId":[^,]+,?)|("_className":[^,]+,?)|("child":\{"\$_ish":[^,]+\})\}))+\}/
  */
-Representable.prototype.freeze = function() {
+Representable.prototype.toJSON = function() {
 	var self = this;
 
 	var decycle = function(object) {
@@ -216,7 +215,7 @@ Representable.prototype.freeze = function() {
 		}(object));
 	};
 
-	return JSON.stringify(decycle(self));
+	return decycle(self);
 };
 
 
@@ -225,7 +224,7 @@ Representable.prototype.freeze = function() {
  * The Thaw method de-serializes a Representable object from JSON, including object references
  * @methodOf Representable
  * @method thaw
- * @param {String} aJSONString A JSON string generated with @Representable.freeze()
+ * @param {String} aJSONString A JSON string generated with @Representable.toJSON()
  * @returns {Representable} The defrosted object
  * @examples
  * var Person = function() {

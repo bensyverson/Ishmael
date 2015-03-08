@@ -68,10 +68,12 @@ View.prototype.constructor = View;
 View.prototype.checkTemplate = function() {
 	var self = this;
 
+	// No matter what, if we don't have a template, we're not initialized.
 	if (!self.template) {
 		self.initialized = false;	
 	}
 
+	// In a similar vein, if we don't have a queue, then the init hasn't started.
 	if ((!self.queue) || !(self.queue.hasOwnProperty('add'))) {
 		self.initStarted = false;
 		self.queue = new OrgStuffHereQueue();
@@ -87,32 +89,35 @@ View.prototype.checkTemplate = function() {
 View.prototype.init = function(cb) {
 	var self = this;
 
+	// First, check to see if we have a template, and create a new Queue if necessary.
 	self.checkTemplate();
 
-	// If we already started the init, but haven't finished, queue the cb
+	// We may already be initialized. If so, run the callback immediately.
+	if (self.initialized) {
+		if (cb) cb(null, self.uniqueId());
+		return;
+	}
+
+	// If we already started the init, but haven't finished, just queue the callback and return.
 	if (self.initStarted && (!self.initialized)) {
 		self.enqueue(cb);
 		return;
 	}
 
+	// Start initializing 
 	self.initStarted = true;
-
-	var initDone = function() {
-		self.queue.flush();
-		if (cb) cb(null, self.uniqueId());
-	};
-
-	if (self.initialized) {
-		if (cb) cb(null, self.uniqueId());
-		return;
-	}
 
 	var setTemplate = function(err, template) {
 		if ((!err) && template) {
 			self.template = template;
 		}
 		self.initialized = (self.template != null);
-		self.initializeSubviews(initDone);
+		if (self.initialized) {
+			self.initializeSubviews(function() {
+				self.queue.flush();
+				if (cb) cb(null, self.uniqueId());
+			});
+		} 
 	};
 
 	if (self.templateName) {
@@ -154,18 +159,16 @@ View.prototype.selector = function() {
  * @param {} html
  * @returns 
  */
-View.prototype.autoLayout = function(html) {
+View.prototype.autoLayout = function(html, selector) {
 	var self = this;
 	if (self.useAutoLayout !== true) {
 		printWarning("AutoLayout called on manual layout view.");
 	}
-	if (self.template == null) {
+	if (self.template === null) {
 		var AutoLayout = global.AutoLayout || require('./ishmael-layoutview.js');
 
 		var al = new AutoLayout();
-		al.autoLayoutViewWithHTML(self, html, true);
-
-		// al.printSubviews(self);
+		al.autoLayoutViewWithHTML(self, html, selector, true);
 
 		var func = PutStuffHere.shared().compileText(self.templateConst);
 		self.template = func;
@@ -252,8 +255,6 @@ View.prototype.element = function(){
 		if (elements.length > 0) {
 			return elements[0];
 		}
-	} else {
-		printWarning("element() called in a non-browser context.");  //cyan
 	}
 	return null;
 };
@@ -268,10 +269,8 @@ View.prototype.element = function(){
 View.prototype.initializeSubviews = function(cb){
 	var self = this;
 
-
 	if (self.subviews.length > 0) {
 		var i = 0;
-		
 		var nextFunction = function() {
 			if (i < self.subviews.length) {
 				self.subviews[i++].init(function(){
@@ -319,21 +318,22 @@ View.prototype.enqueue = function(aFunction){
  * @param {App} anApp The parent app. We need its router to hijack links.
  * @param {Element} anElement The container element in the DOM
  * @param {Function} cb A callback
- * @returns self
  */
 View.prototype.bindToAppElement = function(anApp, anElement, cb) {
 	var self = this;
 
-	if (anElement) {
-		self.renderHTML(function(err, html){
-			anElement.innerHTML = html;
-			self.activate();
-			if (cb) cb(null, self.uniqueId());
-		});
-	} else {
-		println("No root element!");	
+	if (!anElement) {
+		println("No root element!");
+		return;
 	}
-	return self;
+
+	println("BINDING root view (" + self.uniqueId() + ")");
+	self.renderHTML(function(err, html){
+		println("************** BIND IS FINALLY DONE.");
+		anElement.innerHTML = html;
+		self.activate();
+		if (cb) cb(null, self.uniqueId());
+	});
 };
 
 
@@ -368,7 +368,7 @@ View.prototype.updateLocals = function(cb) {
 };
 
 /**
- * Layout subviews
+ * Layout subviews. 
  * @method layoutSubviews
  * @returns self
  */
@@ -379,7 +379,11 @@ View.prototype.layoutSubviews = function() {
 	self.updateLocals();
 
 	for (var i = 0; i < self.subviews.length; i++) {
-		self.subviews[i].layoutSubviews();
+		try {
+			self.subviews[i].layoutSubviews();
+		} catch(e) {
+			printError(e);
+		}
 	}
 
 	return self;
@@ -403,27 +407,53 @@ View.prototype.update = function(cb) {
 		return;
 	}
 
+	return self.createInitLayoutSubviews(function(err, anId){
+		// Get our `Element` in the DOM.
+		var dummy = null;
+		var anElement = null;
+		var elements = document.querySelectorAll("[data-ish=\"" + self.uniqueId() + "\"]");
+		if (elements.length > 0) {
+			// Create a dummy `Element` and `_render` into its `innerHTML`. 
+			anElement = elements[0];
+			dummy = document.createElement('div');
+			dummy.innerHTML = self._render(true);
+			// Here we replace the `firstChild` of the dummy node, but we should perhaps remove all nodes from `anElement` and add all children of the dummy instead.
+			anElement.parentNode.replaceChild(dummy.firstChild, anElement);
+
+			// `activate` allows subviews to wire up UI events
+			self.activate();
+
+		} else {
+			err = "Couldn't find element for " + self.uniqueId() + " in the DOM.";
+		}
+		// Remove any reference to DOM objects.
+		dummy = null;
+		anElement = null;
+		elements = null;
+		// Finally, run the callback.
+		if (typeof(cb) === typeof(function(){})) cb(err, self.uniqueId());
+	});
+};
+
+View.prototype.createInitLayoutSubviews = function(cb) {
+	var self = this;
+	// First, initialize ourselves if necessary, or queue this to run after we're initialized.
 	self.enqueue(function() {
-		self.layoutSubviews();
+		// Create views if needed. This lets a subclass change its layout (add/remove subviews) based on the locals.
+		self.createSubviews();
 
+		// We need to re-initialize subviews, since createSubviews may have added / removed views.
 		self.initializeSubviews(function() {
-			var err = null;
-			var elements = document.querySelectorAll("[data-ish=\"" + self.uniqueId() + "\"]");
+	
+			// Give subviews a chance to rearrange the subviews that were created and initialized
+			self.layoutSubviews();
 
-			if (elements.length > 0) {
-				var anElement = elements[0];
-				var dummy = document.createElement('div');
-				dummy.innerHTML = self._render(true);
-				anElement.parentNode.replaceChild(dummy.firstChild, anElement);
-
-				self.activate();
-
-				dummy = null;
-			} 
-			if (cb) cb(err, self.uniqueId());
+			// It shouldn't be possible to have an error, but we'll return null and our `uniqueId` to fit the standard `(err, data)` callback format.
+			if (typeof(cb) === typeof(function(){})) cb(null, self.uniqueId());
 		});
 	});
-	return self;
+	// Enable chaining
+	return self;	
 };
 
 
@@ -473,13 +503,14 @@ View.prototype.removeFromSuperview = function() {
 		}
 		if (myIndex > -1) {
 			self.superview.subviews.splice(myIndex, 1);
-//			delete self.superview.subviews[myIndex];
+			self.superview = null;
 		}
 	}
 
 	var element = self.element();
 	if (element && element.parentNode) {
 		element.parentNode.removeChild(element);
+		element = null;
 	}
 };
 
@@ -516,7 +547,7 @@ View.prototype._render = function(isBrowser) {
 	if (!self.template) {
 		// Unless you've unset self.template, this should not happen.
 		println("No template for " + self.name + " (" + self.uniqueId() + ")");
-		println(self);
+		println(JSON.stringify(self));
 		renderedHTML = '<div><!--ERROR--></div>';
 	} else {
 		renderedHTML = self.template(self.locals);
@@ -564,15 +595,9 @@ View.prototype.createSubviews = function() {
 View.prototype.renderHTML = function(cb) {
 	var self = this;
 
-	self.enqueue(function() {
-		// Layout if needed. This lets a subclass change its layout (add/remove subviews) based on the locals.
-		self.layoutSubviews();
-
-		self.initializeSubviews(function() {
-			if (typeof(cb) === typeof(function(){})) cb(null, self._render());	
-		});
+	return self.createInitLayoutSubviews(function(err, anId){
+		if (typeof(cb) === typeof(function(){})) cb(null, self._render());	
 	});
-	return self;
 };
 
 /**
@@ -585,11 +610,8 @@ View.prototype.renderSnapshot = function(cb) {
 	var self = this;
 
 	self.enqueue(function() {
-		self.layoutSubviews();
-
-		self.initializeSubviews(function() {
-			if (typeof(cb) === typeof(function(){})) cb(null, self._render());	
-		});
+		// We'll skip createSubviews() and just take a snapshot of the current tree.
+		if (typeof(cb) === typeof(function(){})) cb(null, self._render());	
 	});
 	return self;
 };
