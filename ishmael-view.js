@@ -417,7 +417,7 @@ View.prototype.update = function(cb) {
 			anElement = elements[0];
 			dummy = document.createElement('div');
 			dummy.innerHTML = self._render(true);
-			// Here we replace the `firstChild` of the dummy node, but we should perhaps remove all nodes from `anElement` and add all children of the dummy instead.
+			// We replace the element with the `firstChild` of dummy. Views should be wrapped in a single tag; this just helps enforces it.
 			anElement.parentNode.replaceChild(dummy.firstChild, anElement);
 
 			// `activate` allows subviews to wire up UI events
@@ -536,6 +536,12 @@ View.prototype._render = function(isBrowser) {
 	var self = this;
 
 	var renderedHTML = '';
+
+	// If this view is hidden, return the blank string.
+	if (self.hidden) {
+		return renderedHTML;
+	}
+
 	// Now we can concatenate all of our subviews together.
 	var subviewString = self.subviews
 							.map(function(v){ return v._render(isBrowser); })
@@ -547,7 +553,7 @@ View.prototype._render = function(isBrowser) {
 	if (!self.template) {
 		// Unless you've unset self.template, this should not happen.
 		println("No template for " + self.name + " (" + self.uniqueId() + ")");
-		println(JSON.stringify(self));
+		// println(JSON.stringify(self));
 		renderedHTML = '<div><!--ERROR--></div>';
 	} else {
 		renderedHTML = self.template(self.locals);

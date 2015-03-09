@@ -397,17 +397,14 @@ AutoLayout.prototype.createViewForImplicitElements = function(implicitElements, 
 		if (html.length > 0) {
 			var implicitView = null;
 
-			// Round trip us back to the DOM. What's happening here is that this n
-			// var newTree = self.domUtils.parseDOM(html);
-
-			// If we just have one child, get the View from the node. 
+			// If we just have one child, use `viewFromNode` to create the node. This allows you to specify a `data-ish-name` attribute without specifying a `data-ish-class`. Often, you just need to be able to refer to a subview, and don't mind it being a generic `View`. This way you don't have to manually specify `data-ish-class="View"`.
 			if (nodeChildren.length == 1) {
 				implicitView = self.viewFromNode(nodeChildren[0], parentView);
 			} else {
 				implicitView = new self.context['View']();
+				implicitView.useAutoLayout = false;
+				implicitView.templateName = null;
 			}
-			implicitView.useAutoLayout = false;
-			implicitView.templateName = null;
 			implicitView.templateConst = html;
 			return implicitView;
 		}
