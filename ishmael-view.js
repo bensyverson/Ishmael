@@ -166,9 +166,9 @@ View.prototype.autoLayout = function(html, selector) {
 	}
 	if (self.template === null) {
 		var AutoLayout = global.AutoLayout || require('./ishmael-layoutview.js');
-
 		var al = new AutoLayout();
-		al.autoLayoutViewWithHTML(self, html, selector, true);
+		al.autoLayoutViewWithHTML(self, html, selector, false);
+		self.setApp(self.app);
 
 		var func = PutStuffHere.shared().compileText(self.templateConst);
 		self.template = func;
@@ -466,7 +466,7 @@ View.prototype.createInitLayoutSubviews = function(cb) {
  */
 View.prototype.addSubview = function(aView) {
 	var self = this;
-
+	if (self.app) aView.setApp(self.app);
 	self.subviews.push(aView);
 	aView.superview = self;
 };
@@ -480,6 +480,7 @@ View.prototype.addSubview = function(aView) {
  */
 View.prototype.insertSubviewAtIndex = function(aView, anIndex) {
 	var self = this;
+	aView.setApp(self.app);
 	self.subviews.splice(anIndex, 0, aView);
 	aView.superview = self;
 };
@@ -526,6 +527,14 @@ View.prototype.removeAllSubviews = function() {
 		self.subviews.pop().removeFromSuperview();
 	}
 	return self;
+};
+
+View.prototype.setApp = function(anApp) {
+	var self = this;
+	self.app = anApp;
+	for (var i=0; i < self.subviews.length; i++) {
+		self.subviews[i].setApp(anApp);
+	}
 };
 
 

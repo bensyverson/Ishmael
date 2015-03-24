@@ -1,7 +1,7 @@
 
 var View = require('./ishmael-view.js');
 var println = println || function(x){console.log(x);}
-var BlipView = require('./radar-blipview.js');
+var BlipView = require('./radarblipview.js');
 
 var printSubviews = function(aView, anIndent) {
 	println("\n" + anIndent + "• " + aView.identity() + ": '" + aView.name + "' (" + aView.uniqueId() + ")");

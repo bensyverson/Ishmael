@@ -15,6 +15,7 @@ var Representable = Representable || require('./ishmael.js');
 var ViewController = function(aRoute, aView) {
 	Representable.call(this);
 
+	this.app = null;
 	this.view = aView || new View();
 	this.route = aRoute;
 	this._childViewControllers =[];
@@ -25,13 +26,13 @@ ViewController.prototype = Object.create(Representable.prototype);
 ViewController.prototype.constructor = ViewController;
 
 
-// /**
-//  * Render the View Controller
-//  */
-// ViewController.prototype.render = function() {
-// 	var self = this;
-// 	return self.view.render();
-// };
+/**
+ * Render the View Controller
+ */
+ViewController.prototype.render = function() {
+	var self = this;
+	return self.view.render();
+};
 
 
 /**
@@ -57,6 +58,19 @@ ViewController.prototype.childViewControllers = function() {
 	return self._childViewControllers;
 };
 
+
+
+ViewController.prototype.setApp = function(anApp) {
+	var self = this;
+	self.app = anApp;
+	var childVCs = self.childViewControllers();
+	for (var i=0; i < childVCs.length; i++) {
+		childVCs[i].setApp(anApp);
+	}
+	self.view.setApp(anApp);
+};
+
+
 /**
  * Add a new child view controller
  * @method addChildViewController
@@ -67,9 +81,10 @@ ViewController.prototype.addChildViewController = function(aViewController) {
 	var self = this;
 	// Order is important here.
 	aViewController.parentViewController = self;		// 1
-	aViewController.willMoveToParentViewController();	// 2
-	self._childViewControllers.push(aViewController);	// 3
-	aViewController.didMoveToParentViewController();	// 4
+	if (self.app) aViewController.app = self.app;						// 2
+	aViewController.willMoveToParentViewController();	// 3
+	self._childViewControllers.push(aViewController);	// 4
+	aViewController.didMoveToParentViewController();	// 5
 };
 
 /**

@@ -1,7 +1,8 @@
 "use strict";
+
 var Representable = Representable || require('./ishmael.js');
 var Control = Control || require('./ishmael-control.js');
-
+var View = View || require('./ishmael-view.js');
 /**
  * Description
  * @method UIButton
@@ -13,7 +14,7 @@ var Control = Control || require('./ishmael-control.js');
 var UIButton = function(templateName, aName, cb) {
 	var self = this;
 	Control.call(this, templateName, aName, cb);
-	self.templateConst = "<p>put name here\nput subviews (unescaped) here</p>"
+	self.templateConst = "<p>put name here\nput subviews (unescaped) here</p>";
 	if (self) {
 		self.touchBegan = false;
 	}

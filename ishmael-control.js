@@ -3,6 +3,8 @@ var Representable = Representable || require('./ishmael.js');
 
 var View = View || require('./ishmael-view.js');
 var IDEvent = IDEvent || require('./ishmael-idevent.js');
+/** @const {string} */ var IDControlEventGeneric = 'com.ideo.control.genericEvent';
+
 var nil = null;
 
 /**
@@ -113,7 +115,7 @@ Control.prototype.sendActionsForControlEvents = function(controlEvents)
 		if (self.eventTargets().hasOwnProperty(key)) {
 			if ((controlEventMask & parseInt(key)) != 0) {
 				for (var i = 0; i < self.eventTargets()[key].length; i++) {
-					var anEvent = new IDEvent(IDEventNameGeneric, controlEventMask);
+					var anEvent = new IDEvent(IDControlEventGeneric, controlEventMask);
 					self.eventTargets()[key][i](self, anEvent); // Actually run the control
 				}
 			}
