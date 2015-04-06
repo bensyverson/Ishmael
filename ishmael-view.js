@@ -7,8 +7,8 @@
  * @returns 
  */
 var println = function(x){console.log(x);}
-var printWarning = function(x) { console.log('\x1b[33mWARNING: %s\x1b[0m', x);};
-var printError = function(x) { console.log('\x1b[31mERROR: %s\x1b[0m', x);};
+var printWarning = function(x) { console.log('\x1b[33m• WARNING: %s\x1b[0m', x);};
+var printError = function(x) { console.log('\x1b[31m• ERROR: %s\x1b[0m', x);};
 var global = Function('return this')();
 if (typeof(require) === typeof(undefined))  global.require = function(){return null;};
 
@@ -166,7 +166,10 @@ View.prototype.autoLayout = function(html, selector) {
 	}
 	if (self.template === null) {
 		var AutoLayout = global.AutoLayout || require('./ishmael-layoutview.js');
-		var al = new AutoLayout();
+		var al = new AutoLayout({
+			requirePaths: self.app.requirePaths,
+		});
+		al.domUtils.isNative = false;
 		al.autoLayoutViewWithHTML(self, html, selector, false);
 		self.setApp(self.app);
 
@@ -374,14 +377,16 @@ View.prototype.updateLocals = function(cb) {
  */
 View.prototype.layoutSubviews = function() {
 	var self = this;
-
 	// First update our locals. This gives subclasses a chance to set locals based on a custom object, data source, time of day, etc.
-	self.updateLocals();
+
+	// println("Laying out subviews for " + self.identity() + " : " + self.uniqueId());
 
 	for (var i = 0; i < self.subviews.length; i++) {
 		try {
+			self.subviews[i].updateLocals();
 			self.subviews[i].layoutSubviews();
 		} catch(e) {
+			printWarning("Subview: " + self.subviews[i].identity() + " " + self.subviews[i].uniqueId());
 			printError(e);
 		}
 	}
@@ -400,11 +405,12 @@ View.prototype.update = function(cb) {
 
 	// Just ignore if we're not in the browser.
 	if (typeof (window) === typeof(undefined)) {
-		return;
+		return self.createInitLayoutSubviews(cb);
+//		return cb();
 	}
 
 	if ((!self.initialized) && (self.initStarted)) {
-		return;
+		return cb();
 	}
 
 	return self.createInitLayoutSubviews(function(err, anId){
@@ -415,10 +421,10 @@ View.prototype.update = function(cb) {
 		if (elements.length > 0) {
 			// Create a dummy `Element` and `_render` into its `innerHTML`. 
 			anElement = elements[0];
-			dummy = document.createElement('div');
-			dummy.innerHTML = self._render(true);
+			// dummy = document.createElement('div');
+			// dummy.innerHTML = self._render(true);
 			// We replace the element with the `firstChild` of dummy. Views should be wrapped in a single tag; this just helps enforces it.
-			anElement.parentNode.replaceChild(dummy.firstChild, anElement);
+			anElement.innerHTML = self._render(true);
 
 			// `activate` allows subviews to wire up UI events
 			self.activate();
@@ -427,7 +433,7 @@ View.prototype.update = function(cb) {
 			err = "Couldn't find element for " + self.uniqueId() + " in the DOM.";
 		}
 		// Remove any reference to DOM objects.
-		dummy = null;
+		// dummy = null;
 		anElement = null;
 		elements = null;
 		// Finally, run the callback.
@@ -444,7 +450,10 @@ View.prototype.createInitLayoutSubviews = function(cb) {
 
 		// We need to re-initialize subviews, since createSubviews may have added / removed views.
 		self.initializeSubviews(function() {
-	
+			
+			// Update those locals	
+			self.updateLocals();
+
 			// Give subviews a chance to rearrange the subviews that were created and initialized
 			self.layoutSubviews();
 
@@ -510,7 +519,7 @@ View.prototype.removeFromSuperview = function() {
 
 	var element = self.element();
 	if (element && element.parentNode) {
-		element.parentNode.removeChild(element);
+		//element.parentNode.removeChild(element);
 		element = null;
 	}
 };
@@ -545,6 +554,7 @@ View.prototype._render = function(isBrowser) {
 	var self = this;
 
 	var renderedHTML = '';
+	self.locals['subviews'] = '';
 
 	// If this view is hidden, return the blank string.
 	if (self.hidden) {
@@ -561,7 +571,7 @@ View.prototype._render = function(isBrowser) {
 
 	if (!self.template) {
 		// Unless you've unset self.template, this should not happen.
-		println("No template for " + self.name + " (" + self.uniqueId() + ")");
+		printWarning("No template for " + self.name + " (" + self.uniqueId() + ")");
 		// println(JSON.stringify(self));
 		renderedHTML = '<div><!--ERROR--></div>';
 	} else {

@@ -157,11 +157,27 @@ ViewController.prototype.transitionFromViewController = function(dict) {
 /**
  * Create the view hierarchy.
  * @method loadView
- * @param {} isAnimated
+ * @param {Function} cb Callback
  * @return 
  */
-ViewController.prototype.loadView = function(isAnimated) {
+ViewController.prototype.loadView = function(cb) {
 	var self = this;
+	var children = self.childViewControllers();
+	if (children.length > 0) {
+		var i = 0;
+		var nextFunction = function() {
+			if (i < children.length) {
+				children[i++].loadView(function(){
+					nextFunction();
+				});
+			} else {
+				if (cb && (typeof(cb) === typeof(function(){}))) cb(null, self);
+			}
+		};
+		nextFunction();
+	} else {
+		if (cb && (typeof(cb) === typeof(function(){}))) cb(null, self);
+	}
 };
 
 /**

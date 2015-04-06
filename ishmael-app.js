@@ -5,6 +5,9 @@ var Router = Router || require('./ishmael-router.js');
 var Representable = Representable || require('./ishmael.js');
 var PutStuffHere = PutStuffHere || require('./putstuffhere.js');
 
+var _uuid = require('./autoincrement.js') || Autoincrementer;
+var uuid = uuid || (_uuid ? _uuid.shared : null);
+
 /**
  * App object
  * @constructor
@@ -67,13 +70,15 @@ App.prototype.bootstrap = function(anId, cb) {
 	var option = { resGetPath: '../locales/__lng__/__ns__.json' };
 
 	// i18n.init(option, function() {
-		self.rootViewController().loadView();
-		self.rootViewController().view.bindToAppElement(self, document.getElementById(anId), function(err, id) {
-			self.rootViewController().viewDidLoad();		
-			self.rootViewController().viewWillAppear();
-			self.rootViewController().viewDidAppear();
-			if (typeof(cb) === typeof(function(){})) cb(err, id);
+		self.rootViewController().loadView(function() {
+			self.rootViewController().view.bindToAppElement(self, document.getElementById(anId), function(err, id) {
+				self.rootViewController().viewDidLoad();		
+				self.rootViewController().viewWillAppear();
+				self.rootViewController().viewDidAppear();
+				if (typeof(cb) === typeof(function(){})) cb(err, id);
+			});
 		});
+		
 	// });
 };
 
@@ -139,6 +144,8 @@ App.prototype.packAndShipFromPath = function(aPath, cb) {
 		return;		
 	}
 
+	self.lastUniqueId = uuid().generate();
+
 	aVC.view.renderHTML(function(err, html){
 		var myErr = null;
 		var myHTML = null;
@@ -154,11 +161,12 @@ App.prototype.packAndShipFromPath = function(aPath, cb) {
 					+ ' try{Representable=require(p[i] + "ishmael.js");window.UserDefaults=require(p[i] + "ishmael-userdefaults.js");}catch(e){}'
 					+ ' if (Representable !== null) break;'
 					+ '}'
-					+ 'var j=\''
-					+ JSON.stringify(self)
-						.replace(/'/g, "\\\'")
-						.replace(/\\n/g, "\\\\n")
-					+ '\';var a=Representable.thaw(j, null,' + JSON.stringify(self.requirePaths) + ');'
+					+ 'var j='
+					+ JSON.stringify(JSON.stringify(self))
+						// .replace(/'/g, "\\\'")
+						// .replace(/\\"/g, '\\\\\\\"')
+						// .replace(/\\n/g, "\\\\n")
+					+ ';var a=Representable.thaw(j, null,' + JSON.stringify(self.requirePaths) + ');'
 					+ 'a._mouthToMouth(function(err,appId){console.log("Launched " + appId);});'
 					+ '};document.addEventListener("DOMContentLoaded",m);}())</script>';
 		}
@@ -176,6 +184,9 @@ App.prototype.packAndShipFromPath = function(aPath, cb) {
 App.prototype._mouthToMouth = function(cb) {
 	var self = this;
 	var option = { resGetPath: '../locales/__lng__/__ns__.json' };
+
+	println("Last unique id: " + self.lastUniqueId);
+	uuid().advance(self.lastUniqueId);
 
 	self.applicationWillFinishLaunching(cb);
 };

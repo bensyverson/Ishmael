@@ -140,11 +140,13 @@ if (!String.prototype.trim) {
  */
 var AutoLayout = function(options) {
 	// This will be prepended to any require() calls to get the View's object.
-	this.viewRoot = './radar-';
+	this.viewRoot = './';
+	this.requirePaths = [];
 	this.setInstanceVariables = true;
 	if (options) {
-		this.viewRoot = this.viewRoot || options.viewRoot;
-		this.setInstanceVariables = this.setInstanceVariables || options.setInstanceVariables;
+		this.viewRoot = options.viewRoot || this.viewRoot;
+		this.requirePaths = options.requirePaths || this.requirePaths;
+		this.setInstanceVariables = options.setInstanceVariables || this.setInstanceVariables;
 	}
 
 	this.domUtils = new NativeDOMUtils();
@@ -337,22 +339,35 @@ AutoLayout.prototype.viewFromNode = function(node, parentView) {
 				}
 			}
 			if (aView === null) {
-				try {
-					var requiredClass = require(self.viewRoot + className + '.js') || null;
-					if (requiredClass !== null) {
-						aView = new requiredClass(null, attribs.name);
-					}
-				} catch(e) {
-					println("No go on the require()");
+				for (var j = 0; j < self.requirePaths.length; j++) {
+					if (aView) break;
+					try {
+						var requiredClass = require(self.requirePaths[j] + className.toLocaleLowerCase() + '.js') || null;
+						if (requiredClass !== null) {
+							aView = new requiredClass(null, attribs.name);
+						}
+					} catch(e) { }
 				}
 			}
 		}
 	}
 
 	if (aView === null) {
-		aView = new self.context['View'](null, attribs.name);
+		var _View = View || self.context['View'] || null;
+		if (!_View) {
+			for (var j = 0; j < self.requirePaths.length; j++) {
+				try {
+					_View = require(self.requirePaths[j]+ 'view.js');
+					break;
+				} catch(e){ }
+			}
+		}
+		if (_View) aView = new _View(null, attribs.name);
 	}
-
+	
+	if (!aView) {
+		return null;
+	}
 	aView.hidden = hidden;
 	aView.useAutoLayout = false;
 
