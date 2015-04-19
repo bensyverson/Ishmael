@@ -29,30 +29,36 @@ SailsView.prototype.constructor = SailsView;
 SailsView.prototype.initializeSubviews = function(cb) {
 	var self = this;
 
-	
+	//self.enqueue(function() {
+		// println("INITIALIZING " + self.uniqueId());
+		if (io && io.socket && io.socket.on) {
+			io.socket.on(self.modelIdentity, self.didReceiveSocketUpdate );
+		}
 
-	if (io && io.socket && io.socket.on) {
-		io.socket.on(self.modelIdentity, self.didReceiveSocketUpdate );
-	}
+		SailsWrapper.shared().models[self.modelIdentity]
+			.findOneById(self.modelId)
+			.populateAll()
+			.exec(function(err, model) {
+				if (err) {
+					println("ERROR: ");
+					println(err);
+				} else if (model ) {
+					self.modelObject = model.toObject();
 
-	SailsWrapper.shared().models[self.modelIdentity]
-		.findOneById(self.modelId)
-		.populateAll()
-		.exec(function(err, model) {
-			if (err) {
-				println("ERROR: ");
-				println(err);
-			} else if (model ) {
-				self.modelObject = model;
-
-				self.layoutSubviews();
-				self.updateLocals();
-				
-				View.prototype.initializeSubviews.call(self, function(){
-					if (typeof(cb) === typeof(function(){})) cb(null, self.uniqueId());
-				});
-			}
-		});
+					self.layoutSubviews();
+					self.updateLocals();
+					
+					View.prototype.initializeSubviews.call(self, function(){
+						if (typeof(cb) === typeof(function(){})) {
+							// println("SAILS VIEW IS ALL DONE APARENTLY " + self.uniqueId());
+							cb(null, self.uniqueId());
+						} else {
+							println("NO CALLBACK");
+						}
+					});
+				}
+			});
+	//});
 };
 
 SailsView.prototype.didReceiveSocketUpdate = function(msg) {

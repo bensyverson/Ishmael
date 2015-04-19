@@ -94,6 +94,8 @@ View.prototype.init = function(cb) {
 
 	// We may already be initialized. If so, run the callback immediately.
 	if (self.initialized) {
+		// printError("Already initialized " + self.uniqueId() + " : " + self.identity());
+		// self.printSubviews('');
 		if (cb) cb(null, self.uniqueId());
 		return;
 	}
@@ -111,9 +113,10 @@ View.prototype.init = function(cb) {
 		if ((!err) && template) {
 			self.template = template;
 		}
-		self.initialized = (self.template != null);
-		if (self.initialized) {
+		var hasTemplate = (self.template != null);
+		if (hasTemplate) {
 			self.initializeSubviews(function() {
+				self.initialized =
 				self.queue.flush();
 				if (cb) cb(null, self.uniqueId());
 			});
@@ -175,7 +178,7 @@ View.prototype.autoLayout = function(html, selector) {
 
 		var func = PutStuffHere.shared().compileText(self.templateConst);
 		self.template = func;
-		self.initialized = (self.template != null);
+	//	self.initialized = (self.template != null);
 	}
 };
 
@@ -272,21 +275,32 @@ View.prototype.element = function(){
 View.prototype.initializeSubviews = function(cb){
 	var self = this;
 
-	if (self.subviews.length > 0) {
-		var i = 0;
-		var nextFunction = function() {
-			if (i < self.subviews.length) {
-				self.subviews[i++].init(function(){
-					nextFunction();
-				});
-			} else {
-				if (cb) cb();
-			}
-		};
-		nextFunction();
-	} else {
-		if (cb) cb();
-	}
+
+	//self.enqueue(function() {
+		// println("\n-------------------------");
+		// println("Initializing subviews of " + self.identity() + " : " +  self.uniqueId());
+		if (self.subviews.length > 0) {
+			var i = 0;
+			var nextFunction = function() {
+				if (i < self.subviews.length) {
+					var aSubview = self.subviews[i];
+					// println("\tInitializing " + self.uniqueId() + " subview #" + i + " (" + aSubview.uniqueId() + ")");
+					i++;
+					aSubview.init(function() {
+						// println("  Finished initializing " + aSubview.identity() + ":" + aSubview.uniqueId());
+						nextFunction();
+					});
+				} else {
+					// println("Reached end of subviews (" + i + " for " + self.identity() + ":" + self.uniqueId() + " " + self.name);
+					// println("Last subview: " + self.subviews[i - 1].identity() + self.subviews[i - 1].uniqueId());
+					if (cb) cb();
+				}
+			};
+			nextFunction();
+		} else {
+			if (cb) cb();
+		}
+//	});
 };
 
 /**
@@ -386,7 +400,7 @@ View.prototype.layoutSubviews = function() {
 			self.subviews[i].updateLocals();
 			self.subviews[i].layoutSubviews();
 		} catch(e) {
-			printWarning("Subview: " + self.subviews[i].identity() + " " + self.subviews[i].uniqueId());
+			printError("Subview: " + self.subviews[i].identity() + " " + self.subviews[i].uniqueId());
 			printError(e);
 		}
 	}
@@ -406,7 +420,6 @@ View.prototype.update = function(cb) {
 	// Just ignore if we're not in the browser.
 	if (typeof (window) === typeof(undefined)) {
 		return self.createInitLayoutSubviews(cb);
-//		return cb();
 	}
 
 	if ((!self.initialized) && (self.initStarted)) {
@@ -415,15 +428,10 @@ View.prototype.update = function(cb) {
 
 	return self.createInitLayoutSubviews(function(err, anId){
 		// Get our `Element` in the DOM.
-		var dummy = null;
 		var anElement = null;
 		var elements = document.querySelectorAll("[data-ish=\"" + self.uniqueId() + "\"]");
 		if (elements.length > 0) {
-			// Create a dummy `Element` and `_render` into its `innerHTML`. 
 			anElement = elements[0];
-			// dummy = document.createElement('div');
-			// dummy.innerHTML = self._render(true);
-			// We replace the element with the `firstChild` of dummy. Views should be wrapped in a single tag; this just helps enforces it.
 			anElement.innerHTML = self._render(true);
 
 			// `activate` allows subviews to wire up UI events
@@ -433,9 +441,7 @@ View.prototype.update = function(cb) {
 			err = "Couldn't find element for " + self.uniqueId() + " in the DOM.";
 		}
 		// Remove any reference to DOM objects.
-		// dummy = null;
 		anElement = null;
-		elements = null;
 		// Finally, run the callback.
 		if (typeof(cb) === typeof(function(){})) cb(err, self.uniqueId());
 	});
@@ -443,6 +449,8 @@ View.prototype.update = function(cb) {
 
 View.prototype.createInitLayoutSubviews = function(cb) {
 	var self = this;
+
+	println("Create, init, layout called on " + self.identity() + ":" + self.uniqueId() + " " + self.name);
 	// First, initialize ourselves if necessary, or queue this to run after we're initialized.
 	self.enqueue(function() {
 		// Create views if needed. This lets a subclass change its layout (add/remove subviews) based on the locals.
@@ -457,6 +465,8 @@ View.prototype.createInitLayoutSubviews = function(cb) {
 			// Give subviews a chance to rearrange the subviews that were created and initialized
 			self.layoutSubviews();
 
+			println("~~~~~~~~~ DONE WITH CIL for " + self.identity() + ":" + self.uniqueId() + " " + self.name);
+
 			// It shouldn't be possible to have an error, but we'll return null and our `uniqueId` to fit the standard `(err, data)` callback format.
 			if (typeof(cb) === typeof(function(){})) cb(null, self.uniqueId());
 		});
@@ -466,6 +476,15 @@ View.prototype.createInitLayoutSubviews = function(cb) {
 };
 
 
+View.prototype.printSubviews = function(tab) {
+	var self = this;
+	println(tab + self.identity() + ":" + self.uniqueId() + " Initialized? " + self.initialized + " init started? " + self.initStarted);
+
+	tab += "\t";
+	for (var i = 0; i < self.subviews.length; i++) {
+		self.subviews[i].printSubviews(tab);
+	}
+};
 
 /**
  * Add Subview. Not chainable, because init() must come either before or after.
@@ -571,7 +590,7 @@ View.prototype._render = function(isBrowser) {
 
 	if (!self.template) {
 		// Unless you've unset self.template, this should not happen.
-		printWarning("No template for " + self.name + " (" + self.uniqueId() + ")");
+		printWarning("No template for " + self.name + " (" + self.uniqueId() + ") in " + self.superview.uniqueId());
 		// println(JSON.stringify(self));
 		renderedHTML = '<div><!--ERROR--></div>';
 	} else {
@@ -621,6 +640,8 @@ View.prototype.renderHTML = function(cb) {
 	var self = this;
 
 	return self.createInitLayoutSubviews(function(err, anId){
+		self.printSubviews('');
+		println("============== RENDER TOTALLY DONE FOR " + self.uniqueId());
 		if (typeof(cb) === typeof(function(){})) cb(null, self._render());	
 	});
 };
