@@ -5,6 +5,7 @@ if (typeof(require) === typeof(undefined))  global.require = function(){return n
 
 var View = View || require('./ishmael-view.js');
 var NativeDOMUtils = NativeDOMUtils || require("./ishmael-domutils.js");
+var printError = require('./ishmael-printerror.js');
 
 if (!String.prototype.trim) {
   (function() {
@@ -346,7 +347,9 @@ AutoLayout.prototype.viewFromNode = function(node, parentView) {
 						if (requiredClass !== null) {
 							aView = new requiredClass(null, attribs.name);
 						}
-					} catch(e) { }
+					} catch(e) {
+						//printError("Couldn't instantiate custom class: " + e);
+					}
 				}
 			}
 		}

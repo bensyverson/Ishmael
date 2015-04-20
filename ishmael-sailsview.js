@@ -4,6 +4,7 @@ var DataView = DataView || require('./ishmael-dataview.js');
 var View = View || require('./ishmael-view.js');
 var io = io || ((typeof(window) !== typeof(undefined)) ? require('./sails.io.js').shared() : null);
 var SailsWrapper = SailsWrapper || require('./ishmael-sails.js');
+var printError = printError || require('./ishmael-printerror.js');
 
 var println = function(msg) { console.log(msg); }
 
@@ -29,42 +30,47 @@ SailsView.prototype.constructor = SailsView;
 SailsView.prototype.initializeSubviews = function(cb) {
 	var self = this;
 
-	//self.enqueue(function() {
-		// println("INITIALIZING " + self.uniqueId());
-		if (io && io.socket && io.socket.on) {
-			io.socket.on(self.modelIdentity, self.didReceiveSocketUpdate );
-		}
+	if (io && io.socket && io.socket.on) {
+		io.socket.on(self.modelIdentity, function(msg) {
+			self.didReceiveSocketUpdate(msg);
+		});
+	}
 
-		SailsWrapper.shared().models[self.modelIdentity]
-			.findOneById(self.modelId)
-			.populateAll()
-			.exec(function(err, model) {
-				if (err) {
-					println("ERROR: ");
-					println(err);
-				} else if (model ) {
-					self.modelObject = model.toObject();
+	SailsWrapper.shared().models[self.modelIdentity]
+		.findOneById(self.modelId)
+		.populateAll()
+		.exec(function(err, model) {
+			if (err) {
+				printError(err);
+			} else if (model) {
+				self.modelObject = model.toObject();
 
-					self.layoutSubviews();
-					self.updateLocals();
-					
-					View.prototype.initializeSubviews.call(self, function(){
-						if (typeof(cb) === typeof(function(){})) {
-							// println("SAILS VIEW IS ALL DONE APARENTLY " + self.uniqueId());
-							cb(null, self.uniqueId());
-						} else {
-							println("NO CALLBACK");
-						}
-					});
-				}
-			});
-	//});
+				// self.createSubviews();
+				self.layoutSubviews();
+				self.updateLocals();
+			}
+			View.prototype.initializeSubviews.call(self, cb);
+		});
+};
+
+SailsView.prototype.removeFromSuperview = function() {
+	var self = this;
+
+	View.prototype.removeFromSuperview.call(this);
 };
 
 SailsView.prototype.didReceiveSocketUpdate = function(msg) {
 	var self = this;
-	println("SOCKET UPDATE: ----------- ");
-	println(msg);
+	println("SOCKET UPDATE " + self.uniqueId() +  ": ----------- ");
+	if (msg && msg.id && (msg.id == self.modelId) && msg.data ) {
+		println(msg);
+		for (var property in msg) {
+			if (msg.hasOwnProperty(property)) {
+				self.modelObject[property] = msg[property];
+			}
+		}
+		self.dataDidReload();
+	}
 };
 
 SailsView.prototype.layoutSubviews = function() {

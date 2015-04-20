@@ -80,6 +80,21 @@ View.prototype.checkTemplate = function() {
 	}
 };
 
+View.prototype.isFullyInitialized = function() {
+	var self = this;
+	if (!self.initialized) {
+		return false;
+	}
+	for (var i = 0; i < self.subviews.length; i++) {
+		if (self.subviews[i].isFullyInitialized() == false) {
+			//printError("Not initialized: " + self.subviews[i].identity() + ":" + self.subviews[i].uniqueId());
+			return false;
+		}
+	}
+	//printWarning(self.subviews.length + " subviews of " + self.identity() + ":" + self.uniqueId() + " are fully initialized");
+	return true;
+};
+
 /**
  * Init
  * @method init
@@ -92,22 +107,16 @@ View.prototype.init = function(cb) {
 	// First, check to see if we have a template, and create a new Queue if necessary.
 	self.checkTemplate();
 
+	var fullyInitialized = self.isFullyInitialized();
+
 	// We may already be initialized. If so, run the callback immediately.
-	if (self.initialized) {
-		// printError("Already initialized " + self.uniqueId() + " : " + self.identity());
+	if (fullyInitialized == true) {
 		// self.printSubviews('');
 		if (cb) cb(null, self.uniqueId());
 		return;
 	}
 
-	// If we already started the init, but haven't finished, just queue the callback and return.
-	if (self.initStarted && (!self.initialized)) {
-		self.enqueue(cb);
-		return;
-	}
 
-	// Start initializing 
-	self.initStarted = true;
 
 	var setTemplate = function(err, template) {
 		if ((!err) && template) {
@@ -116,12 +125,24 @@ View.prototype.init = function(cb) {
 		var hasTemplate = (self.template != null);
 		if (hasTemplate) {
 			self.initializeSubviews(function() {
-				self.initialized =
 				self.queue.flush();
+				self.initialized = true;
 				if (cb) cb(null, self.uniqueId());
 			});
 		} 
 	};
+
+
+	// If we already started the init, but haven't finished, just queue the callback and return.
+	if (self.initStarted && (!fullyInitialized)) {
+		//printError("  queueing callback for " + self.uniqueId());
+		self.enqueue(setTemplate);
+		return;
+	}
+
+		// Start initializing 
+	self.initStarted = true;
+
 
 	if (self.templateName) {
 		if (self.useAutoLayout) {
@@ -275,10 +296,10 @@ View.prototype.element = function(){
 View.prototype.initializeSubviews = function(cb){
 	var self = this;
 
+	if (self.identity == 'DetailListView') println("Initializing subviews of " + self.identity() + " : " +  self.uniqueId());
 
 	//self.enqueue(function() {
 		// println("\n-------------------------");
-		// println("Initializing subviews of " + self.identity() + " : " +  self.uniqueId());
 		if (self.subviews.length > 0) {
 			var i = 0;
 			var nextFunction = function() {
@@ -320,7 +341,7 @@ View.prototype.enqueue = function(aFunction){
 
 	// Here we intentionally check to see if we're initialized
 	// right away. If we just called init(), we want to queue the callback.
-	if (self.initialized) {
+	if (self.isFullyInitialized()) {
 		aFunction();
 	} else {
 		self.queue.add(aFunction);
@@ -450,19 +471,24 @@ View.prototype.update = function(cb) {
 View.prototype.createInitLayoutSubviews = function(cb) {
 	var self = this;
 
-	println("Create, init, layout called on " + self.identity() + ":" + self.uniqueId() + " " + self.name);
+	printError("Create, init, layout called on " + self.identity() + ":" + self.uniqueId() + " " + self.name);
+	printError("Queueing first init.");
 	// First, initialize ourselves if necessary, or queue this to run after we're initialized.
 	self.enqueue(function() {
 		// Create views if needed. This lets a subclass change its layout (add/remove subviews) based on the locals.
+		printError("Creating subviews.");
 		self.createSubviews();
 
 		// We need to re-initialize subviews, since createSubviews may have added / removed views.
+		printError("Init'ing subviews");
 		self.initializeSubviews(function() {
 			
 			// Update those locals	
+			printError("Updating locals");
 			self.updateLocals();
 
 			// Give subviews a chance to rearrange the subviews that were created and initialized
+			printError("Layout subviews");
 			self.layoutSubviews();
 
 			println("~~~~~~~~~ DONE WITH CIL for " + self.identity() + ":" + self.uniqueId() + " " + self.name);
@@ -621,13 +647,16 @@ View.prototype._render = function(isBrowser) {
 };
 
 /**
- * Create any subviews necessary
+ * Create any subviews necessary. Synchronous method only.
  * @method renderHTML
  * @param {Function} cb A callback
  * @returns self
  */
 View.prototype.createSubviews = function() {
 	var self = this;
+	for (var i = 0; i < self.subviews.length; i++) {
+		self.subviews[i].createSubviews();
+	}
 };
 
 /**
@@ -641,7 +670,7 @@ View.prototype.renderHTML = function(cb) {
 
 	return self.createInitLayoutSubviews(function(err, anId){
 		self.printSubviews('');
-		println("============== RENDER TOTALLY DONE FOR " + self.uniqueId());
+		// println("============== RENDER TOTALLY DONE FOR " + self.uniqueId());
 		if (typeof(cb) === typeof(function(){})) cb(null, self._render());	
 	});
 };
