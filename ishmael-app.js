@@ -183,7 +183,6 @@ App.prototype.packAndShipFromPath = function(aPath, cb) {
 // You should never call this method directly. `_mouthToMouth()` is called automatically by the function generated in `packAndShipFromPath()` on the server. `_mouthToMouth()` uses the HTML output from `packAndShipFromPath()` to skip rendering the View hierarchy, and calls `activate()` to bind the App's eventListeners to the DOM elements.
 App.prototype._mouthToMouth = function(cb) {
 	var self = this;
-	var option = { resGetPath: '../locales/__lng__/__ns__.json' };
 
 	println("Last unique id: " + self.lastUniqueId);
 	uuid().advance(self.lastUniqueId);

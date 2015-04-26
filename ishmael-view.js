@@ -460,7 +460,7 @@ View.prototype.update = function(cb) {
 		var elements = document.querySelectorAll("[data-ish=\"" + self.uniqueId() + "\"]");
 		if (elements.length > 0) {
 			anElement = elements[0];
-			anElement.innerHTML = self._render(true);
+			anElement.outerHTML = self._render(true);
 
 			// `activate` allows subviews to wire up UI events
 			self.activate();

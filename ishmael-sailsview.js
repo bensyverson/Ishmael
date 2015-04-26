@@ -2,7 +2,9 @@
 
 var DataView = DataView || require('./ishmael-dataview.js');
 var View = View || require('./ishmael-view.js');
+
 var io = io || ((typeof(window) !== typeof(undefined)) ? require('./sails.io.js').shared() : null);
+
 var SailsWrapper = SailsWrapper || require('./ishmael-sails.js');
 var printError = printError || require('./ishmael-printerror.js');
 
@@ -15,6 +17,7 @@ var println = function(msg) { console.log(msg); }
 var SailsView = function() {
 	DataView.apply(this, arguments);
 
+	this.isBound = false;
 
 	this.registerClass('SailsView');
 };
@@ -30,10 +33,13 @@ SailsView.prototype.constructor = SailsView;
 SailsView.prototype.initializeSubviews = function(cb) {
 	var self = this;
 
-	if (io && io.socket && io.socket.on) {
-		io.socket.on(self.modelIdentity, function(msg) {
-			self.didReceiveSocketUpdate(msg);
-		});
+	if (!self.isBound) {
+		self.isBound = true;
+		if (io && io.socket && io.socket.on) {
+			io.socket.on(self.modelIdentity, function(msg){
+				self.didReceiveSocketUpdate(msg);
+			});
+		}
 	}
 
 	SailsWrapper.shared().models[self.modelIdentity]
@@ -44,8 +50,7 @@ SailsView.prototype.initializeSubviews = function(cb) {
 				printError(err);
 			} else if (model) {
 				self.modelObject = model.toObject();
-
-				// self.createSubviews();
+				self.createSubviews();
 				self.layoutSubviews();
 				self.updateLocals();
 			}
@@ -62,10 +67,13 @@ SailsView.prototype.removeFromSuperview = function() {
 SailsView.prototype.didReceiveSocketUpdate = function(msg) {
 	var self = this;
 	println("SOCKET UPDATE " + self.uniqueId() +  ": ----------- ");
+	println(msg);
+	println("My id: " + self.modelId + " vs " + msg.id);
 	if (msg && msg.id && (msg.id == self.modelId) && msg.data ) {
 		println(msg);
-		for (var property in msg) {
+		for (var property in msg.data) {
 			if (msg.hasOwnProperty(property)) {
+				//println("Updating " + property + " to " + msg[property]);
 				self.modelObject[property] = msg[property];
 			}
 		}
