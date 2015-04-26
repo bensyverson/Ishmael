@@ -333,6 +333,7 @@ AutoLayout.prototype.viewFromNode = function(node, parentView) {
 	var aView = null;
 	if ((typeof(className) !== typeof(undefined)) && (className !== null)) {
 		if (className !== 'View') {
+
 			var ctx = self.context;
 			if (ctx) {
 				if (typeof(ctx[className]) === typeof(function(){})) {
@@ -348,7 +349,7 @@ AutoLayout.prototype.viewFromNode = function(node, parentView) {
 							aView = new requiredClass(null, attribs.name);
 						}
 					} catch(e) {
-						//printError("Couldn't instantiate custom class: " + e);
+						// printError("Couldn't instantiate custom class: " + e);
 					}
 				}
 			}

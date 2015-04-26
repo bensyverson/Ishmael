@@ -342,7 +342,7 @@ View.prototype.enqueue = function(aFunction){
 	// Here we intentionally check to see if we're initialized
 	// right away. If we just called init(), we want to queue the callback.
 	if (self.isFullyInitialized()) {
-		aFunction();
+		if (typeof(aFunction) === typeof(function(){})) aFunction();
 	} else {
 		self.queue.add(aFunction);
 	}
@@ -380,13 +380,15 @@ View.prototype.bindToAppElement = function(anApp, anElement, cb) {
  * @method activate
  * @returns 
  */
-View.prototype.activate = function() {
+View.prototype.activate = function(cb) {
 	var self = this;
-	
-	// Activate myself
-	for (var i = 0; i < self.subviews.length; i++) {
-		self.subviews[i].activate();
-	}
+	self.enqueue(function(){
+		// Activate myself
+		for (var i = 0; i < self.subviews.length; i++) {
+			self.subviews[i].activate();
+		}
+		if (typeof(cb) === typeof(function(){})) cb();
+	});
 };
 
 
@@ -438,15 +440,20 @@ View.prototype.layoutSubviews = function() {
 View.prototype.update = function(cb) {
 	var self = this;
 
+	var fullyInitialized = self.isFullyInitialized();
+
 	// Just ignore if we're not in the browser.
 	if (typeof (window) === typeof(undefined)) {
 		return self.createInitLayoutSubviews(cb);
 	}
 
 	if ((!self.initialized) && (self.initStarted)) {
-		return cb();
+		//if (cb) self.enqueue(cb);
+		if (typeof(cb) === typeof(function(){})) cb();
+		return;
 	}
 
+	
 	return self.createInitLayoutSubviews(function(err, anId){
 		// Get our `Element` in the DOM.
 		var anElement = null;
@@ -471,6 +478,10 @@ View.prototype.update = function(cb) {
 View.prototype.createInitLayoutSubviews = function(cb) {
 	var self = this;
 
+	// if (!self.isFullyInitialized()) {
+	// 	self.initialized = false;
+	// }
+
 	printError("Create, init, layout called on " + self.identity() + ":" + self.uniqueId() + " " + self.name);
 	printError("Queueing first init.");
 	// First, initialize ourselves if necessary, or queue this to run after we're initialized.
@@ -492,6 +503,10 @@ View.prototype.createInitLayoutSubviews = function(cb) {
 			self.layoutSubviews();
 
 			println("~~~~~~~~~ DONE WITH CIL for " + self.identity() + ":" + self.uniqueId() + " " + self.name);
+
+			// if (typeof (window) !== typeof(undefined)) {
+			// 	self.activate();
+			// }
 
 			// It shouldn't be possible to have an error, but we'll return null and our `uniqueId` to fit the standard `(err, data)` callback format.
 			if (typeof(cb) === typeof(function(){})) cb(null, self.uniqueId());

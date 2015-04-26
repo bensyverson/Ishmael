@@ -200,12 +200,14 @@ App.prototype.applicationWillFinishLaunching = function(cb) {
 App.prototype.finishLaunchingApplication = function(cb) {
 	var self = this;
 	UserDefaults.sharedUserDefaults()['app'] = self;
+
 	self.rootViewController().viewDidLoad();
 	self.rootViewController().viewWillAppear();
+	self.rootViewController().viewDidAppear();
+
 	var view = self.rootViewController().view;
-	view.init(function(err, uniqueId){
-		self.rootViewController().viewDidAppear();
-		view.activate();
+	view.update(function(err, uniqueId){
+		//view.activate();
 		if (typeof(cb) === typeof(function(){})) cb(err, uniqueId);
 	});
 };
