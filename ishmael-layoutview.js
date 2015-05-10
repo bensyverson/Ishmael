@@ -353,6 +353,9 @@ AutoLayout.prototype.viewFromNode = function(node, parentView) {
 					}
 				}
 			}
+			if (aView === null) {
+				printError("Couldn't instantiate custom class: " + className);
+			}
 		}
 	}
 
@@ -361,7 +364,7 @@ AutoLayout.prototype.viewFromNode = function(node, parentView) {
 		if (!_View) {
 			for (var j = 0; j < self.requirePaths.length; j++) {
 				try {
-					_View = require(self.requirePaths[j]+ 'view.js');
+					_View = require(self.requirePaths[j]+ 'ishmael-view.js');
 					break;
 				} catch(e){ }
 			}

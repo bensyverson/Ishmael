@@ -18,6 +18,7 @@ var ViewController = function(aRoute, aView) {
 	this.app = null;
 	this.view = aView || new View();
 	this.route = aRoute;
+	this.title = "View Controller";
 	this._childViewControllers =[];
 	this.parentViewController = null;
 	this.registerClass('ViewController');
@@ -81,7 +82,7 @@ ViewController.prototype.addChildViewController = function(aViewController) {
 	var self = this;
 	// Order is important here.
 	aViewController.parentViewController = self;		// 1
-	if (self.app) aViewController.app = self.app;						// 2
+	if (self.app) aViewController.app = self.app;		// 2
 	aViewController.willMoveToParentViewController();	// 3
 	self._childViewControllers.push(aViewController);	// 4
 	aViewController.didMoveToParentViewController();	// 5
@@ -115,6 +116,18 @@ ViewController.prototype.removeFromParentViewController = function() {
 	aViewController.parentViewController._removeChildViewController(self);
 	aViewController.parentViewController = null;
 };
+
+/**
+ * Remove all child View Controllers
+ * @return
+ */
+ViewController.prototype.removeAllChildViewControllers = function() {
+	var self = this;
+	var children = self.childViewControllers();
+	for (var i=0; i < children.length; i++) {
+		children[i].removeFromParentViewController();
+	}
+}; 
 
 
 /**

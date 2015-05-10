@@ -64,11 +64,11 @@ Control.prototype.constructor = Control;
  * function(e) { self.privateAction(); }
  * @summary Add a target action (function) for the control to call
  * @method addTargetActionForControlEvents
- * @param {} aTargetAction
  * @param {number} aControlEvent The control event mask (eg UIControlEventTouchDown)
+ * @param {Function} aTargetAction The action to call
  * @return 
  */
-Control.prototype.addTargetActionForControlEvents = function(aTargetAction, aControlEvent)
+Control.prototype.addTargetActionForControlEvents = function(aControlEvent, aTargetAction)
 {
 	var self = this;
 
@@ -94,7 +94,7 @@ Control.prototype.addTargetActionForControlEvents = function(aTargetAction, aCon
  * @param {number} aControlEvent The control event mask (eg UIControlEventTouchDown)
  * @return 
  */
-Control.prototype.removeTargetActionForControlEvents = function(aTargetAction, aControlEvent)
+Control.prototype.removeTargetActionForControlEvents = function(aControlEvent, aTargetAction )
 {
 	var self = this;
 	alert("stub"); // TODO FIXME
