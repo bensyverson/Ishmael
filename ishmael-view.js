@@ -380,14 +380,13 @@ View.prototype.bindToAppElement = function(anApp, anElement, cb) {
  * @method activate
  * @returns 
  */
-View.prototype.activate = function(cb) {
+View.prototype.activate = function() {
 	var self = this;
 	self.enqueue(function(){
 		// Activate myself
 		for (var i = 0; i < self.subviews.length; i++) {
 			self.subviews[i].activate();
 		}
-		if (typeof(cb) === typeof(function(){})) cb();
 	});
 };
 

@@ -113,8 +113,8 @@ ViewController.prototype._removeChildViewController = function(aViewController) 
  */
 ViewController.prototype.removeFromParentViewController = function() {
 	var self = this;
-	aViewController.parentViewController._removeChildViewController(self);
-	aViewController.parentViewController = null;
+	self.parentViewController._removeChildViewController(self);
+	self.parentViewController = null;
 };
 
 /**
@@ -201,6 +201,10 @@ ViewController.prototype.loadView = function(cb) {
  */
 ViewController.prototype.viewDidLoad = function(isAnimated) {
 	var self = this;
+	var children = self.childViewControllers();
+	for (var i = 0; i < children.length; i++) {
+		children[i].viewDidLoad();
+	}
 };
 
 /**
@@ -211,6 +215,11 @@ ViewController.prototype.viewDidLoad = function(isAnimated) {
  */
 ViewController.prototype.viewWillAppear = function(isAnimated) {
 	var self = this;
+	//self.view.activate();
+	var children = self.childViewControllers();
+	for (var i = 0; i < children.length; i++) {
+		children[i].viewWillAppear();
+	}
 };
 
 /**
@@ -221,6 +230,10 @@ ViewController.prototype.viewWillAppear = function(isAnimated) {
  */
 ViewController.prototype.viewDidAppear = function(isAnimated) {
 	var self = this;
+	var children = self.childViewControllers();
+	for (var i = 0; i < children.length; i++) {
+		children[i].viewDidAppear();
+	}
 };
 
 

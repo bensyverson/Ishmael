@@ -14,6 +14,7 @@ var View = View || require('./ishmael-view.js');
 var UIButton = function(templateName, aName, cb) {
 	var self = this;
 	Control.call(this, templateName, aName, cb);
+	self.cachedElement = null;
 	self.templateConst = "<p>put name here\nput subviews (unescaped) here</p>";
 	if (self) {
 		self.touchBegan = false;
@@ -34,9 +35,11 @@ UIButton.prototype.activate = function() {
 	
 	// Activate myself
 	var element = self.element();
-	element.addEventListener('touchstart', function(e){ return self.didReceiveTouch(e);}, true);
-	element.addEventListener('mousedown', function(e){  return self.didReceiveTouch(e);}, true);
-
+	if (element !== self.cachedElement) {
+		element.addEventListener('touchstart', function(e){ return self.didReceiveTouch(e);}, true);
+		element.addEventListener('mousedown', function(e){  return self.didReceiveTouch(e);}, true);
+		self.cachedElement = element;
+	}
 	View.prototype.activate.apply(this, arguments);
 };
 
@@ -62,6 +65,8 @@ UIButton.prototype.touchesBeganWithEvent = function(anEvent)
 	self.sendActionsForControlEvents(Control.EventTouchDown);
 
 	self.touchBegan = true;
+
+	return true;
 };
 
 /**

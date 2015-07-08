@@ -82,51 +82,7 @@ App.prototype.bootstrap = function(anId, cb) {
 	// });
 };
 
-// App.prototype.renderPath = function(aPath, cb) {
-// 	var self = this;
-// 	if (typeof(cb) !== typeof(function(){})) return;
-// 	var vc = self.viewControllerForRoute(aPath);
-// 	if (vc) {
-// 		vc.view.renderHTML(function(err, html){
-// 			if (err) {
-// 				return cb(err, null);
-// 			}
-// 			html = '<script type="text/javascript">var _ishmaelUser="' + self.userId +  '";</script>\n' + html;
-// 			cb(null, html);
-// 		});
-// 	} else {
-// 		cb("No view controller.", null);
-// 	}
-// };
 
-/**
- * Bootstrap, a method called by the browser to get ourselves going from zero.
- * @method packAndShip
- * @param {} cb
- * @return 
- */
-// App.prototype.packAndShipFromBrowser = function(cb) {
-// 	var self = this;
-
-// 	self.rootViewController().view.renderSnapshot(function(err, html){
-// 		var myErr = null;
-// 		var myHTML = null;
-// 		if (err) {
-// 			myErr = myErr
-// 		} else {
-// 			myHTML = html 
-// 					+ '<script type="text/javascript">(function(){var m=function(e){'
-// 					+ 'var j=\''
-// 					+ self.freeze()
-// 						.replace(/'/g, "\\\'")
-// 						.replace(/\\n/g, "\\\\n")
-// 					+ '\';var a=Representable.thaw(j);'
-// 					+ 'a.mouthToMouth(function(err,appId){console.log("Launched " + appId);});'
-// 					+ '};document.addEventListener("DOMContentLoaded",m);}())</script>';
-// 		}
-// 		if (typeof(cb) === typeof(function(){})) cb(myErr, myHTML);
-// 	});
-// };
 
 /**
  * Bootstrap, a method called by the browser to get ourselves going from zero.
@@ -200,13 +156,15 @@ App.prototype.finishLaunchingApplication = function(cb) {
 	var self = this;
 	UserDefaults.sharedUserDefaults()['app'] = self;
 
-	self.rootViewController().viewDidLoad();
-	self.rootViewController().viewWillAppear();
-	self.rootViewController().viewDidAppear();
+//	self.rootViewController().viewWillAppear();
+//	self.rootViewController().viewDidAppear();
 
 	var view = self.rootViewController().view;
-	view.update(function(err, uniqueId){
-		//view.activate();
+	view.init(function(err, uniqueId){
+		self.rootViewController().viewDidLoad();
+		self.rootViewController().viewWillAppear();
+		self.rootViewController().viewDidAppear();
+		view.activate();
 		if (typeof(cb) === typeof(function(){})) cb(err, uniqueId);
 	});
 };

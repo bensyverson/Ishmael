@@ -135,9 +135,9 @@ Control.prototype.didReceiveTouch = function(anEvent) {
 	
 	if (self.touchesBeganWithEvent) {
 		var element = self.element();
-		var handleTouchMove = nil;
-		var handleTouchEnd = nil;
-		var handleTouchCancel = nil;
+		var handleTouchMove = null;
+		var handleTouchEnd = null;
+		var handleTouchCancel = null;
 
 
 		if (self.touchesMovedWithEvent) {
@@ -149,6 +149,7 @@ Control.prototype.didReceiveTouch = function(anEvent) {
 			handleTouchMove = function(moveEvent) {
 				return self.touchesMovedWithEvent(moveEvent);
 			};
+			element.addEventListener('touchmove', handleTouchMove, false);
 		}
 
 		if (self.touchesEndedWithEvent) {
@@ -161,10 +162,12 @@ Control.prototype.didReceiveTouch = function(anEvent) {
 				element.removeEventListener('touchmove', handleTouchMove, false);
 				element.removeEventListener('touchend', handleTouchEnd, false);
 				element.removeEventListener('touchcancel', handleTouchCancel, false);
-				element.removeEventListener('mouseup', handleTouchEnd, false);
+				window.removeEventListener('mouseup', handleTouchEnd, false);
 				return self.touchesEndedWithEvent(endEvent);
 			};
-		}
+			element.addEventListener('touchend', handleTouchEnd, false);
+			window.addEventListener('mouseup', handleTouchEnd, false);
+		} 
 
 		if (self.touchesCancelledWithEvent) {
 			/**
@@ -176,17 +179,12 @@ Control.prototype.didReceiveTouch = function(anEvent) {
 				element.removeEventListener('touchmove', handleTouchMove, false);
 				element.removeEventListener('touchend', handleTouchEnd, false);
 				element.removeEventListener('touchcancel', handleTouchCancel, false);
-				element.removeEventListener('mouseup', handleTouchEnd, false);
+				window.removeEventListener('mouseup', handleTouchEnd, false);
 				return self.touchesCancelledWithEvent(endEvent);
 			};
+			element.addEventListener('touchcancel', handleTouchCancel, false);
 		}
 
-		if (handleTouchMove) element.addEventListener('touchmove', handleTouchMove, false);
-
-		if (handleTouchEnd) element.addEventListener('touchend', handleTouchEnd, false);
-		if (handleTouchEnd) element.addEventListener('mouseup', handleTouchEnd, false);
-
-		if (handleTouchCancel) element.addEventListener('touchcancel', handleTouchCancel, false);
 
 		return self.touchesBeganWithEvent(anEvent);
 	} else {
