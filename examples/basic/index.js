@@ -1,43 +1,29 @@
-"use strict";
+'use strict';
 if (typeof(require) === typeof(undefined)) window.require = function(){return null;};
-var println = println || function(e) { console.log(e) };
 
-var Ishmael = require('ishmael');
-var View = View || Ishmael.View;
-var App = App || Ishmael.App;
+var BasicApp = require('./basicapp.js');
+var PutStuffHere = require('putstuffhere');
+var fs = require('fs');
+var path = require('path');
 
+if (PutStuffHere.shared()) {
+	PutStuffHere.shared().setTemplateRoot(__dirname);
+}
 
-var BasicApp = function() {
-	App.apply(this, arguments);
+var appInstance = new BasicApp();
 
-	var aViewController = new TabViewController('/');
-	if (aViewController) {
-		this.viewControllers.push(aViewController);
-		aViewController.setApp(this);
-	} 
+appInstance.rootViewController().loadView(function(){
+	appInstance.rootViewController().viewDidLoad();
+	appInstance.packAndShipFromPath('/', function(err, html){
+		if (err) {
+			console.log("ERROR: " + err);
+			return;
+		}
 
-	this.requirePaths = [
-		'./assets/js/dependencies/ishmael-',
-		'./assets/js/dependencies/radar',
-		'./assets/js/dependencies/',
-		'./assets/js/',
-		'./radar',
-		'./ishmael-',
-		'./',
-	];
+		var data = fs.readFileSync(path.resolve(__dirname, 'template.html'));
+		var template = data.toString('utf8');
 
-	this.registerClass('BasicApp');
-};
-BasicApp.prototype = Object.create(App.prototype);
-BasicApp.prototype.constructor = BasicApp;
-
-BasicApp.prototype.applicationWillFinishLaunching = function(cb) {
-	var self = this;
-
-	// Override this method in subclasses to do any asynchronous loading, before calling:
-	console.log("Done");
-};
-
-
-if (typeof(module) === typeof(undefined)) window.module = {};
-module.exports = BasicApp;
+		template = template.replace(/put html here/, html);
+		console.log(template);
+	});
+});

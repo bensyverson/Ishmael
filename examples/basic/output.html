@@ -1,0 +1,42 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>BasicApp</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+	    <link rel="stylesheet" href="index.css" type="text/css" charset="utf-8">
+
+<script type="text/javascript" src="../../node_modules/putstuffhere/lib/ajax.js"></script>
+<script type="text/javascript" src="../../node_modules/putstuffhere/lib/queue.js"></script>
+<script type="text/javascript" src="../../node_modules/putstuffhere/lib/putstuffhere.js"></script>
+<script type="text/javascript" src="../../node_modules/putstuffhere/index.js"></script>
+
+<script type="text/javascript" src="../../lib/uuid.js"></script>
+<script type="text/javascript" src="../../lib/autoincrement.js"></script>
+
+<script type="text/javascript" src="../../lib/ishmael.js"></script>
+<script type="text/javascript" src="../../lib/uicolor.js"></script>
+<script type="text/javascript" src="../../lib/idevent.js"></script>
+<script type="text/javascript" src="../../lib/layoutview.js"></script>
+<script type="text/javascript" src="../../lib/view.js"></script>
+<script type="text/javascript" src="../../lib/control.js"></script>
+<script type="text/javascript" src="../../lib/uibutton.js"></script>
+<script type="text/javascript" src="../../lib/domutils.js"></script>
+<script type="text/javascript" src="../../lib/dom.js"></script>
+<script type="text/javascript" src="../../lib/userdefaults.js"></script>
+<script type="text/javascript" src="../../lib/printerror.js"></script>
+<script type="text/javascript" src="../../lib/printwarning.js"></script>
+
+<script type="text/javascript" src="../../lib/viewcontroller.js"></script>
+<script type="text/javascript" src="../../lib/app.js"></script>
+
+	</head>
+
+
+	<body>
+		
+		<div data-ish="2" class="list" data-ish-class="StoryListView" id="list">			<div data-ish="9" class="story" data-ish-class="StoryView" data-ish-name="story">				<span data-ish="11" class="button" data-ish-class="UIButton" data-ish-name="closeButton"> Close </span>				<header>					<h2>Headline!</h2>		</header>				<p>					Lede!				</p>			</div><div data-ish="10" class="story" data-ish-class="StoryView" data-ish-name="story">				<span data-ish="12" class="button" data-ish-class="UIButton" data-ish-name="closeButton"> Close </span>				<header>					<h2>Headline2!</h2>				</header>				<p>					Lede2!		</p>			</div>		</div><script type="text/javascript">(function(){var m=function(e){var p=["../../lib/","./"];console.log(Representable);var Representable=Representable || null;window.UserDefaults=null;for (var i=0;i<p.length;i++){ try{Representable=require(p[i] + "ishmael.js");window.UserDefaults=require(p[i] + "userdefaults.js");}catch(e){} if (Representable !== null) break;}var j="{\"_uniqueId\":1,\"_className\":\"BasicApp\",\"rootId\":null,\"viewControllers\":[{\"_uniqueId\":3,\"_className\":\"ViewController\",\"app\":{\"$_ish\":1},\"view\":{\"_uniqueId\":2,\"_className\":\"StoryListView\",\"templateConst\":\"<div class=\\\"list\\\" data-ish-class=\\\"StoryListView\\\" id=\\\"list\\\">\\n\\t\\t\\tinsert subviews (unescaped) here\\n\\t\\t</div>\",\"templateName\":null,\"subviews\":[{\"_uniqueId\":9,\"_className\":\"StoryView\",\"templateConst\":\"<div class=\\\"story\\\" data-ish-class=\\\"StoryView\\\" data-ish-name=\\\"story\\\">\\n\\t\\t\\t\\tinsert subviews (unescaped) here\\n\\t\\t\\t\\t<header>\\n\\t\\t\\t\\t\\t<h2>Put headline here</h2>\\n\\t\\t\\t\\t</header>\\n\\t\\t\\t\\t<p>\\n\\t\\t\\t\\t\\tPut lede here\\n\\t\\t\\t\\t</p>\\n\\t\\t\\t</div>\",\"templateName\":null,\"subviews\":[{\"_uniqueId\":11,\"_className\":\"UIButton\",\"templateConst\":\"<span class=\\\"button\\\" data-ish-class=\\\"UIButton\\\" data-ish-name=\\\"closeButton\\\"> Close </span>\",\"templateName\":null,\"subviews\":[],\"superview\":{\"$_ish\":9},\"classes\":[],\"addMarkup\":true,\"useAutoLayout\":false,\"hidden\":false,\"locals\":{\"name\":\"closeButton\"},\"name\":\"closeButton\",\"model\":\"\",\"initialized\":true,\"initStarted\":true,\"cachedElement\":null,\"touchBegan\":false,\"app\":{\"$_ish\":1},\"queue\":{}}],\"superview\":{\"$_ish\":2},\"classes\":[],\"addMarkup\":true,\"useAutoLayout\":true,\"hidden\":false,\"locals\":{\"headline\":\"Headline!\",\"lede\":\"Lede!\",\"name\":\"Anonymous View\"},\"name\":\"Anonymous View\",\"model\":\"\",\"initialized\":true,\"initStarted\":true,\"closeButton\":{\"$_ish\":11},\"app\":{\"$_ish\":1},\"queue\":{}},{\"_uniqueId\":10,\"_className\":\"StoryView\",\"templateConst\":\"<div class=\\\"story\\\" data-ish-class=\\\"StoryView\\\" data-ish-name=\\\"story\\\">\\n\\t\\t\\t\\tinsert subviews (unescaped) here\\n\\t\\t\\t\\t<header>\\n\\t\\t\\t\\t\\t<h2>Put headline here</h2>\\n\\t\\t\\t\\t</header>\\n\\t\\t\\t\\t<p>\\n\\t\\t\\t\\t\\tPut lede here\\n\\t\\t\\t\\t</p>\\n\\t\\t\\t</div>\",\"templateName\":null,\"subviews\":[{\"_uniqueId\":12,\"_className\":\"UIButton\",\"templateConst\":\"<span class=\\\"button\\\" data-ish-class=\\\"UIButton\\\" data-ish-name=\\\"closeButton\\\"> Close </span>\",\"templateName\":null,\"subviews\":[],\"superview\":{\"$_ish\":10},\"classes\":[],\"addMarkup\":true,\"useAutoLayout\":false,\"hidden\":false,\"locals\":{\"name\":\"closeButton\"},\"name\":\"closeButton\",\"model\":\"\",\"initialized\":true,\"initStarted\":true,\"cachedElement\":null,\"touchBegan\":false,\"app\":{\"$_ish\":1},\"queue\":{}}],\"superview\":{\"$_ish\":2},\"classes\":[],\"addMarkup\":true,\"useAutoLayout\":true,\"hidden\":false,\"locals\":{\"headline\":\"Headline2!\",\"lede\":\"Lede2!\",\"name\":\"Anonymous View\"},\"name\":\"Anonymous View\",\"model\":\"\",\"initialized\":true,\"initStarted\":true,\"closeButton\":{\"$_ish\":12},\"app\":{\"$_ish\":1},\"queue\":{}}],\"superview\":null,\"classes\":[],\"addMarkup\":true,\"useAutoLayout\":true,\"hidden\":false,\"locals\":{\"name\":\"Anonymous View\"},\"name\":\"Anonymous View\",\"model\":\"\",\"initialized\":false,\"initStarted\":true,\"stories\":[{\"headline\":\"Headline!\",\"lede\":\"Lede!\",\"name\":\"Anonymous View\"},{\"headline\":\"Headline2!\",\"lede\":\"Lede2!\",\"name\":\"Anonymous View\"}],\"app\":{\"$_ish\":1},\"queue\":{}},\"route\":\"/\",\"title\":\"View Controller\",\"_childViewControllers\":[],\"parentViewController\":null}],\"dataManager\":null,\"requirePaths\":[\"../../lib/\",\"./\"],\"sharedData\":{},\"lastUniqueId\":4}";var a=Representable.thaw(j, null,["../../lib/","./"]);a._mouthToMouth(function(err,appId){console.log("Launched " + appId);});};document.addEventListener("load",m);}())</script>
+
+	</body>
+
+</html>
