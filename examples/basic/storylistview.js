@@ -1,9 +1,9 @@
 'use strict';
 if (typeof(require) === typeof(undefined)) window.require = function(){return null;};
-var println = println || function(e) { console.log(e) };
+var print = print || function(e) { console.log(e) };
 
 var Ishmael = require('../../index.js');
-var StoryView = require('./storyview.js');
+var StoryView = StoryView || require('./storyview.js');
 
 var View = View || Ishmael.View;
 

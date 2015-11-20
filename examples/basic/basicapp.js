@@ -6,14 +6,13 @@ var Ishmael = require('../../index.js');
 var View = View || Ishmael.View;
 var ViewController = ViewController || Ishmael.ViewController;
 var App = App || Ishmael.App;
-var StoryListView = require('./storylistview.js');
+var StoryListView = StoryListView || require('./storylistview.js');
 
 var BasicApp = function() {
 	App.apply(this, arguments);
 
 
 	var storyListView = new StoryListView();
-
 	var aViewController = new ViewController('/', storyListView);
 	if (aViewController) {
 		this.viewControllers.push(aViewController);
@@ -21,7 +20,7 @@ var BasicApp = function() {
 	}
 
 	this.requirePaths = [
-		'../../lib/',
+		'../examples/basic/',
 		'./',
 	];
 
@@ -35,6 +34,8 @@ BasicApp.prototype.applicationWillFinishLaunching = function(cb) {
 
 	// Override this method in subclasses to do any asynchronous loading, before calling:
 	console.log("Done");
+
+	self.finishLaunchingApplication(cb);
 };
 
 
