@@ -1,6 +1,6 @@
 {
   "name": "ishmael",
-  "version": "0.5.5",
+  "version": "0.5.9",
   "description": "Ishmael is an isomorphic VC library",
   "main": "index.js",
   "directories": {
@@ -25,8 +25,8 @@
     "mocha": "^2.1.0"
   },
   "dependencies": {
+    "putstuffhere": "^0.9.1",
     "domutils": "^1.5.1",
-    "htmlparser2": "^3.8.3",
-    "putstuffhere": "^0.9.1"
+    "htmlparser2": "^3.8.3"
   }
 }
